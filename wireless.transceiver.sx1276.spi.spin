@@ -13,6 +13,10 @@
 
 CON
 
+    FXOSC                   = 32_000_000
+    TWO_19                  = 1 << 19
+    FPSCALE                 = 1_000_000
+    FSTEP                   = 61035156  ' (FXOSC / TWO_19) * FPSCALE
 ' Long-range modes
     LRMODE_FSK_OOK          = 0
     LRMODE_LORA             = 1
@@ -36,6 +40,7 @@ OBJ
     spi : "com.spi.4w"                                             'PASM SPI Driver
     core: "core.con.sx1276"                       'File containing your device's register set
     time: "time"                                                'Basic timing functions
+    u64 : "math.unsigned64"
 
 PUB Null
 ''This is not a top-level object
@@ -63,6 +68,23 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
 PUB Stop
 
     spi.stop
+
+PUB CarrierFreq(freq) | tmp, devmode_tmp
+' Set carrier frequency, in Hz
+'   Valid values: See case table below
+'   Any other value polls the chip and returns the current setting
+    tmp := $00_00_00
+    readReg(core#FRFMSB, 3, @tmp)
+    case freq
+        137_000_000..175_000_000, 410_000_000..525_000_000, 862_000_000..1_020_000_000:
+            freq := u64.MultDiv (freq, FPSCALE, FSTEP)
+        OTHER:
+            return u64.MultDiv (FSTEP, tmp, FPSCALE)
+
+    devmode_tmp := DeviceMode (-2)
+    DeviceMode (DEVMODE_STDBY)
+    writeReg(core#FRFMSB, 3, @freq)
+    DeviceMode (devmode_tmp)
 
 PUB DeviceMode(mode) | tmp
 ' Set device operating mode
@@ -131,7 +153,7 @@ PUB readReg(reg, nr_bytes, buf_addr) | i
     outa[_CS] := 0
     spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
 
-    repeat i from 0 to nr_bytes-1
+    repeat i from nr_bytes-1 to 0
         byte[buf_addr][i] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
     outa[_CS] := 1
 
@@ -146,7 +168,7 @@ PUB writeReg(reg, nr_bytes, buf_addr) | i
     outa[_CS] := 0
     spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg | core#WRITE)
 
-    repeat i from 0 to nr_bytes-1
+    repeat i from nr_bytes-1 to 0
         spi.SHIFTOUT(_MOSI, _SCK, core#MISO_BITORDER, 8, byte[buf_addr][i])
 
     outa[_CS] := 1
