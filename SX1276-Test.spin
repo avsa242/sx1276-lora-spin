@@ -1,11 +1,11 @@
 {
     --------------------------------------------
-    Filename: SX1272-Test.spin
-    Author:
-    Description:
+    Filename: SX1276-Test.spin
+    Author: Jesse Burt
+    Description: Test of the SX1276 driver
     Copyright (c) 2019
-    Started Sep 18, 2019
-    Updated Sep 18, 2019
+    Started Oct 6, 2019
+    Updated Oct 6, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -27,7 +27,7 @@ OBJ
     cfg     : "core.con.boardcfg.flip"
     ser     : "com.serial.terminal"
     time    : "time"
-    lora    : "wireless.transceiver.sx1272.spi"
+    lora    : "wireless.transceiver.sx1276.spi"
 
 VAR
 
@@ -46,9 +46,9 @@ PUB Setup
     ser.Clear
     ser.Str(string("Serial terminal started", ser#NL))
     if lora.Start (CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
-        ser.Str(string("SX1272 driver started", ser#NL))
+        ser.Str(string("sx1276 driver started", ser#NL))
     else
-        ser.Str(string("SX1272 driver failed to start - halting", ser#NL))
+        ser.Str(string("sx1276 driver failed to start - halting", ser#NL))
         lora.Stop
         time.MSleep (500)
         ser.Stop

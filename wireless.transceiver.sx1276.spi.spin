@@ -1,11 +1,12 @@
 {
     --------------------------------------------
-    Filename: wireless.transceiver.sx1272.spi.spin
-    Author:
-    Description:
+    Filename: wireless.transceiver.sx1276.spi.spin
+    Author: Jesse Burt
+    Description: Driver for the SEMTECH SX1276
+        LoRa/FSK/OOK transceiver
     Copyright (c) 2019
-    Started Sep 18, 2019
-    Updated Sep 18, 2019
+    Started Oct 6, 2019
+    Updated Oct 6, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -20,7 +21,7 @@ VAR
 OBJ
 
     spi : "com.spi.4w"                                             'PASM SPI Driver
-    core: "core.con.sx1272"                       'File containing your device's register set
+    core: "core.con.sx1276"                       'File containing your device's register set
     time: "time"                                                'Basic timing functions
 
 PUB Null

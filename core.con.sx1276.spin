@@ -1,11 +1,11 @@
 {
     --------------------------------------------
-    Filename: core.con.sx1272.spin
-    Author:
-    Description:
+    Filename: core.con.sx1276.spin
+    Author: Jesse Burt
+    Description: Low-level constants
     Copyright (c) 2019
-    Started Sep 18, 2019
-    Updated Sep 18, 2019
+    Started Oct 6, 2019
+    Updated Oct 6, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
