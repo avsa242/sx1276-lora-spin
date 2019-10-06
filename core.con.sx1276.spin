@@ -22,7 +22,19 @@ CON
 
 ' General functionality
     FIFO                        = $00
+
     OPMODE                      = $01
+    OPMODE_MASK                 = $CF
+        FLD_LONGRANGEMODE       = 7
+        FLD_ACCESSSHAREDREG     = 6
+        FLD_LOWFREQUENCYMODEON  = 3
+        FLD_MODE                = 0
+        BITS_MODE               = %111
+        MASK_LONGRANGEMODE      = OPMODE_MASK ^ (1 << FLD_LONGRANGEMODE)
+        MASK_ACCESSSHAREDREG    = OPMODE_MASK ^ (1 << FLD_ACCESSSHAREDREG)
+        MASK_LOWFREQUENCYMODEON = OPMODE_MASK ^ (1 << FLD_LOWFREQUENCYMODEON)
+        MASK_MODE               = OPMODE_MASK ^ (BITS_MODE << FLD_MODE)
+
     FRFMSB                      = $06
     FRFMID                      = $07
     FRFLSB                      = $08

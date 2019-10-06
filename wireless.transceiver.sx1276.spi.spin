@@ -13,6 +13,19 @@
 
 CON
 
+' Long-range modes
+    LRMODE_FSK_OOK          = 0
+    LRMODE_LORA             = 1
+
+' Device modes
+    DEVMODE_SLEEP           = %000
+    DEVMODE_STDBY           = %001
+    DEVMODE_FSTX            = %010
+    DEVMODE_TX              = %011
+    DEVMODE_FSRX            = %100
+    DEVMODE_RXCONTINUOUS    = %101
+    DEVMODE_RXSINGLE        = %110
+    DEVMODE_CAD             = %111
 
 VAR
 
@@ -50,6 +63,53 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
 PUB Stop
 
     spi.stop
+
+PUB DeviceMode(mode) | tmp
+' Set device operating mode
+'   Valid values:
+'       DEVMODE_SLEEP (%000): Sleep
+'       DEVMODE_STDBY (%001): Standby
+'       DEVMODE_FSTX (%010): Frequency synthesis TX
+'       DEVMODE_TX (%011): Transmit
+'       DEVMODE_FSRX (%100): Frequency synthesis RX
+'       DEVMODE_RXCONTINUOUS (%101): Receive continuous
+'       DEVMODE_RXSINGLE (%110): Receive single
+'       DEVMODE_CAD (%111): Channel activity detection
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#OPMODE, 1, @tmp)
+    case mode
+        DEVMODE_SLEEP..DEVMODE_CAD:
+        OTHER:
+            return tmp & core#BITS_MODE
+
+    tmp &= core#MASK_MODE
+    tmp := (tmp | mode) & core#OPMODE_MASK
+    writeReg(core#OPMODE, 1, @tmp)
+
+PUB LongRangeMode(mode) | tmp, devmode_tmp
+' Set long-range mode
+'   Valid values:
+'      *LRMODE_FSK_OOK (0): FSK, OOK packet radio mode
+'       LRMODE_LORA (1): LoRa radio mode
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Changing this setting sets the chip to sleep mode while the mode is changed
+'       and subsequently changes it to the original state
+    tmp := $00
+    readReg(core#OPMODE, 1, @tmp)
+    case mode
+        LRMODE_FSK_OOK, LRMODE_LORA:
+            mode := mode << core#FLD_LONGRANGEMODE
+        OTHER:
+            return (tmp >> core#FLD_LONGRANGEMODE) & %1
+
+    devmode_tmp := DeviceMode(-2)
+    DeviceMode(DEVMODE_SLEEP)
+    tmp &= core#MASK_LONGRANGEMODE
+    tmp := (tmp | mode) & core#OPMODE_MASK
+    writeReg(core#OPMODE, 1, @tmp)
+    DeviceMode(devmode_tmp)
+
 
 PUB Version
 ' Version code of the chip
