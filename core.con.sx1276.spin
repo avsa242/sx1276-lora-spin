@@ -5,7 +5,7 @@
     Description: Low-level constants
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 6, 2019
+    Updated Oct 7, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -20,9 +20,8 @@ CON
 
     WRITE                       = 1 << 7
 
-' General functionality
+' General/shared functionality
     FIFO                        = $00
-
     OPMODE                      = $01
     OPMODE_MASK                 = $CF
         FLD_LONGRANGEMODE       = 7
@@ -66,12 +65,14 @@ CON
     RXBW                        = $12
     AFCBW                       = $13
     OOKPEAK                     = $14
-    OOKAVG                      = $15
-    SYMBTIMEOUTLSB              = $15
+    OOKFIX                      = $15
+    OOKAVG                      = $16
+' $17..$19 - RESERVED
     AFCFEI                      = $1A
     AFCMSB                      = $1B
     AFCLSB                      = $1C
     FEIMSB                      = $1D
+    FEILSB                      = $1E
     PREAMBLEDETECT              = $1F
     RXTIMEOUT1                  = $20
     RXTIMEOUT2                  = $21
@@ -112,33 +113,49 @@ CON
     FIFOADDRPTR                 = $0D   'LORA
     FIFOTXBASEADDR              = $0E   'LORA
     FIFORXBASEADDR              = $0F   'LORA
-    IRQFLAGS                    = $10   'LORA
+    FIFORXCURRENTADDR           = $10   'LORA
     IRQFLAGS_MASK               = $11   'LORA
-    FREQIFMSB                   = $12   'LORA
-    FREQIFLSB                   = $13   'LORA
-    SYMBTIMEOUTMSB              = $14   'LORA
-    TXCFG                       = $16   'LORA
-    LORA_PAYLOADLENGTH          = $17   'LORA
-    LORA_PREAMBLEMSB            = $18   'LORA
-    LORA_PREAMBLELSB            = $19   'LORA
-    MODULATIONCFG               = $1A   'LORA
-    RFMODE                      = $1B   'LORA
-    HOPPERIOD                   = $1C   'LORA
-    NBRXBYTES                   = $1D   'LORA
-    RXHEADERCNTVALUE            = $1F   'LORA
-    RXPACKETCNTVALUE            = $20   'LORA
-
-    MODEMSTAT                   = $21   'LORA
-        FLD_RXCODINGRATE        = 5
-        FLD_MODEMSTATUS         = 0
-        BITS_RXCODINGRATE       = %111
-        BITS_MODEMSTATUS        = %11111
-
-    PKTSNRVALUE                 = $22   'LORA
-    LORA_RSSIVALUE              = $23   'LORA
-    PKTRSSIVALUE                = $24   'LORA
-    HOPCHANNEL                  = $25   'LORA
-    RXDATAADDR                  = $26   'LORA
+    IRQFLAGS                    = $12   'LORA
+    RXNBBYTES                   = $13   'LORA
+    RXHEADERCNTVALUEMSB         = $14   'LORA
+    RXHEADERCNTVALUELSB         = $15   'LORA
+    RXPACKETCNTVALUEMSB         = $16   'LORA
+    RXPACKETCNTVALUELSB         = $17   'LORA
+    MODEMSTAT                   = $18   'LORA
+    PKTSNRVALUE                 = $19   'LORA
+    PKTRSSIVALUE                = $1A   'LORA
+    LORA_RSSIVALUE              = $1B   'LORA
+    HOPCHANNEL                  = $1C   'LORA
+    MODEMCONFIG1                = $1D   'LORA
+    MODEMCONFIG2                = $1E   'LORA
+    SYMBTIMEOUT                 = $1F   'LORA
+    LORA_PREAMBLEMSB            = $20   'LORA
+    LORA_PREAMBLELSB            = $21   'LORA
+    LORA_PAYLOADLENGTH          = $22   'LORA
+    MAXPAYLOADLENGTH            = $23   'LORA
+    HOPPERIOD                   = $24   'LORA
+    FIFORXBYTEADDR              = $25   'LORA
+    MODEMCONFIG3                = $26   'LORA
+' $27 - RESERVED
+    LORA_FEIMSB                 = $28   'LORA
+    LORA_FEIMID                 = $29   'LORA
+    LORA_FEILSB                 = $2A   'LORA
+' $2B - RESERVED
+    RSSIWIDEBAND                = $2C   'LORA
+' $2D..2E - RESERVED
+    IFFREQ1                     = $2F   'LORA
+    IFFREQ2                     = $30   'LORA
+    DETECTOPTIMIZE              = $31   'LORA
+' $32 - RESERVED
+    INVERTIQ                    = $33   'LORA
+' $34..$35 - RESERVED
+    HIGHBWOPTIMIZE1             = $36   'LORA
+    DETECTIONTHRESHOLD          = $37   'LORA
+' $38 - RESERVED
+    SYNCWORD                    = $39   'LORA
+    HIGHBWOPTIMIZE2             = $3A   'LORA
+    INVERTIQ2                   = $3B
+' $3C..$3F - RESERVED
 
 PUB Null
 ' This is not a top-level object
