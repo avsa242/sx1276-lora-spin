@@ -157,10 +157,21 @@ PUB SignalSynchronized
 ' Return signal synchronized
     result := ((ModemStatus >> 1) & %1) * TRUE
 
+PUB PacketRSSI
+' RSSI of last packet received, in dBm
+    readReg(core#PKTRSSIVALUE, 1, @result)
+    result := -137 + result
+
 PUB PacketSNR
 ' Signal to noise ratio of last packet received, in dB (estimated)
     readReg(core#PKTSNRVALUE, 1, @result)
     result := ~result / 4
+
+PUB RSSI
+' Current RSSI, in dBm
+    result := $00
+    readReg(core#RSSIVALUE, 1, @result)
+    result := -137 + result
 
 PUB Version
 ' Version code of the chip
