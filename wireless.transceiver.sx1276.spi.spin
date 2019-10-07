@@ -109,6 +109,10 @@ PUB DeviceMode(mode) | tmp
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeReg(core#OPMODE, 1, @tmp)
 
+PUB HeaderInfoValid
+
+    result := ((ModemStatus >> 3) & %1) * TRUE
+
 PUB LongRangeMode(mode) | tmp, devmode_tmp
 ' Set long-range mode
 '   Valid values:
@@ -132,6 +136,26 @@ PUB LongRangeMode(mode) | tmp, devmode_tmp
     writeReg(core#OPMODE, 1, @tmp)
     DeviceMode(devmode_tmp)
 
+PUB ModemClear
+' Return modem clear status
+    result := ((ModemStatus >> 4) & %1) * TRUE
+
+PUB ModemStatus
+' Return modem status bitmask
+    readReg(core#MODEMSTAT, 1, @result)
+    result &= core#BITS_MODEMSTATUS
+
+PUB RXOngoing
+' Return receive on-going status
+    result := ((ModemStatus >> 2) & %1) * TRUE
+
+PUB SignalDetected
+' Return signal detected
+    result := (ModemStatus & %1) * TRUE
+
+PUB SignalSynchronized
+' Return signal synchronized
+    result := ((ModemStatus >> 1) & %1) * TRUE
 
 PUB Version
 ' Version code of the chip

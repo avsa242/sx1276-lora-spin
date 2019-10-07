@@ -127,7 +127,13 @@ CON
     NBRXBYTES                   = $1D   'LORA
     RXHEADERCNTVALUE            = $1F   'LORA
     RXPACKETCNTVALUE            = $20   'LORA
+
     MODEMSTAT                   = $21   'LORA
+        FLD_RXCODINGRATE        = 5
+        FLD_MODEMSTATUS         = 0
+        BITS_RXCODINGRATE       = %111
+        BITS_MODEMSTATUS        = %11111
+
     PKTSNRVALUE                 = $22   'LORA
     LORA_RSSIVALUE              = $23   'LORA
     PKTRSSIVALUE                = $24   'LORA
