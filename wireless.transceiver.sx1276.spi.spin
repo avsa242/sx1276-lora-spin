@@ -157,6 +157,11 @@ PUB SignalSynchronized
 ' Return signal synchronized
     result := ((ModemStatus >> 1) & %1) * TRUE
 
+PUB PacketSNR
+' Signal to noise ratio of last packet received, in dB (estimated)
+    readReg(core#PKTSNRVALUE, 1, @result)
+    result := ~result / 4
+
 PUB Version
 ' Version code of the chip
 '   Returns:
