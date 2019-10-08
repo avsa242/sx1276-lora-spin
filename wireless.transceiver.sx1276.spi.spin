@@ -173,6 +173,23 @@ PUB RSSI
     readReg(core#LORA_RSSIVALUE, 1, @result)
     result := -157 + result
 
+PUB RxBW(Hz) | tmp
+' Set receive bandwidth, in Hz
+'   Valid values: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, 125_000, 250_000, 500_000
+'   Any other value polls the chip and returns the current setting
+'   NOTE: In the lower band, 250_000 and 500_000 are not supported
+    tmp := $00
+    readReg(core#MODEMCONFIG1, 1, @tmp)
+    case Hz
+        7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, 125_000, 250_000, 500_000:
+            Hz := lookdownz(Hz: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, 125_000, 250_000, 500_000) << core#FLD_BW
+        OTHER:
+            result := (tmp >> core#FLD_BW)
+            return lookupz(result: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, 125_000, 250_000, 500_000)
+    tmp &= core#MASK_BW
+    tmp := (tmp | Hz) & core#MODEMCONFIG1_MASK
+    writeReg(core#MODEMCONFIG1, 1, @tmp)
+
 PUB Version
 ' Version code of the chip
 '   Returns:

@@ -132,7 +132,18 @@ CON
     PKTRSSIVALUE                = $1A   'LORA
     LORA_RSSIVALUE              = $1B   'LORA
     HOPCHANNEL                  = $1C   'LORA
+
     MODEMCONFIG1                = $1D   'LORA
+    MODEMCONFIG1_MASK           = $FF
+        FLD_BW                  = 4
+        FLD_CODINGRATE          = 1
+        FLD_IMPL_HEADERMODEON   = 0
+        BITS_BW                 = %1111
+        BITS_CODINGRATE         = %111
+        MASK_BW                 = MODEMCONFIG1_MASK ^ (BITS_BW << FLD_BW)
+        MASK_CODINGRATE         = MODEMCONFIG1_MASK ^ (BITS_CODINGRATE << FLD_CODINGRATE)
+        MASK_IMPL_HEADERMODEON  = MODEMCONFIG1_MASK ^ (1 << FLD_IMPL_HEADERMODEON)
+
     MODEMCONFIG2                = $1E   'LORA
     SYMBTIMEOUT                 = $1F   'LORA
     LORA_PREAMBLEMSB            = $20   'LORA
