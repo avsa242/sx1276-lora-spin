@@ -86,6 +86,28 @@ PUB CarrierFreq(freq) | tmp, devmode_tmp
     writeReg(core#FRFMSB, 3, @freq)
     DeviceMode (devmode_tmp)
 
+PUB CodeRate(rate) | tmp
+' Set Error code rate
+'   Valid values:
+'                   k/n
+'       $04_05  =   4/5
+'       $04_06  =   4/6
+'       $04_07  =   4/7
+'       $04_08  =   4/8
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#MODEMCONFIG1, 1, @tmp)
+    case rate
+        $04_05..$04_08:
+            rate := lookdown(rate: $04_05, $04_06, $04_07, $04_08)
+        OTHER:
+            result := (tmp >> core#FLD_CODINGRATE) & core#BITS_CODINGRATE
+            return lookup(result: $04_05, $04_06, $04_07, $04_08)
+
+    tmp &= core#MASK_CODINGRATE
+    tmp := (tmp | rate) & core#MODEMCONFIG1_MASK
+    writeReg(core#MODEMCONFIG1, 1, @tmp)
+
 PUB DeviceMode(mode) | tmp
 ' Set device operating mode
 '   Valid values:
