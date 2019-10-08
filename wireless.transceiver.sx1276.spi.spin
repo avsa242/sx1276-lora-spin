@@ -217,7 +217,7 @@ PUB RSSI
     readReg(core#LORA_RSSIVALUE, 1, @result)
     result := -157 + result
 
-PUB RxBW(Hz) | tmp
+PUB RXBandwidth(Hz) | tmp
 ' Set receive bandwidth, in Hz
 '   Valid values: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, *125_000, 250_000, 500_000
 '   Any other value polls the chip and returns the current setting
@@ -233,6 +233,22 @@ PUB RxBW(Hz) | tmp
     tmp &= core#MASK_BW
     tmp := (tmp | Hz) & core#MODEMCONFIG1_MASK
     writeReg(core#MODEMCONFIG1, 1, @tmp)
+
+PUB RXPayloadCRC(enabled) | tmp
+' Enable CRC generation and check on payload
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#MODEMCONFIG2, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_RXPAYLOADCRCON
+        OTHER:
+            return ((tmp >> core#FLD_RXPAYLOADCRCON) & %1) * TRUE
+
+    tmp &= core#MASK_RXPAYLOADCRCON
+    tmp := (tmp | enabled) & core#MODEMCONFIG2_MASK
+    writeReg(core#MODEMCONFIG2, 1, @tmp)
 
 PUB SpreadingFactor(chips_sym) | tmp
 ' Set spreading factor rate, in chips per symbol
