@@ -171,7 +171,7 @@ PUB RSSI
 ' Current RSSI, in dBm
     result := $00
     readReg(core#LORA_RSSIVALUE, 1, @result)
-    result := -137 + result
+    result := -157 + result
 
 PUB Version
 ' Version code of the chip
