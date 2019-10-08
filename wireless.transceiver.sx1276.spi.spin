@@ -229,6 +229,23 @@ PUB RxBW(Hz) | tmp
     tmp := (tmp | Hz) & core#MODEMCONFIG1_MASK
     writeReg(core#MODEMCONFIG1, 1, @tmp)
 
+PUB SpreadingFactor(chips_sym) | tmp
+' Set spreading factor rate, in chips per symbol
+'   Valid values: 64, 128, 256, 512, 1024, 2048, 4096
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#MODEMCONFIG2, 1, @tmp)
+    case chips_sym
+        64, 128, 256, 512, 1024, 2048, 4096:
+            chips_sym := lookdown(chips_sym: 64, 128, 256, 512, 1024, 2048, 4096)
+        OTHER:
+            result := (tmp >> core#FLD_SPREADINGFACTOR)-5
+            return lookup(result: 64, 128, 256, 512, 1024, 2048, 4096)
+
+    tmp &= core#MASK_SPREADINGFACTOR
+    tmp := (tmp | chips_sym) & core#MODEMCONFIG2_MASK
+    writeReg(core#MODEMCONFIG2, 1, @tmp)
+
 PUB Version
 ' Version code of the chip
 '   Returns:
