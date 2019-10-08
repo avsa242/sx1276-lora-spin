@@ -170,7 +170,7 @@ PUB PacketSNR
 PUB RSSI
 ' Current RSSI, in dBm
     result := $00
-    readReg(core#RSSIVALUE, 1, @result)
+    readReg(core#LORA_RSSIVALUE, 1, @result)
     result := -137 + result
 
 PUB Version
@@ -199,7 +199,6 @@ PUB readReg(reg, nr_bytes, buf_addr) | i
 
 PUB writeReg(reg, nr_bytes, buf_addr) | i
 ' Write nr_bytes to register 'reg' stored at buf_addr
-
     case reg
         $00..$16, $1A..$42, $44, $4B, $4D, $5B, $5D, $61..$64:
         OTHER:
@@ -209,7 +208,7 @@ PUB writeReg(reg, nr_bytes, buf_addr) | i
     spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg | core#WRITE)
 
     repeat i from nr_bytes-1 to 0
-        spi.SHIFTOUT(_MOSI, _SCK, core#MISO_BITORDER, 8, byte[buf_addr][i])
+        spi.SHIFTOUT(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buf_addr][i])
 
     outa[_CS] := 1
 

@@ -23,14 +23,15 @@ CON
 ' General/shared functionality
     FIFO                        = $00
     OPMODE                      = $01
-    OPMODE_MASK                 = $CF
+    OPMODE_MASK                 = $EF
         FLD_LONGRANGEMODE       = 7
-        FLD_ACCESSSHAREDREG     = 6
+        FLD_MODULATIONTYPE      = 5
         FLD_LOWFREQUENCYMODEON  = 3
         FLD_MODE                = 0
+        BITS_MODULATIONTYPE     = %11
         BITS_MODE               = %111
         MASK_LONGRANGEMODE      = OPMODE_MASK ^ (1 << FLD_LONGRANGEMODE)
-        MASK_ACCESSSHAREDREG    = OPMODE_MASK ^ (1 << FLD_ACCESSSHAREDREG)
+        MASK_MODULATIONTYPE     = OPMODE_MASK ^ (BITS_MODULATIONTYPE << FLD_MODULATIONTYPE)
         MASK_LOWFREQUENCYMODEON = OPMODE_MASK ^ (1 << FLD_LOWFREQUENCYMODEON)
         MASK_MODE               = OPMODE_MASK ^ (BITS_MODE << FLD_MODE)
 
@@ -121,7 +122,12 @@ CON
     RXHEADERCNTVALUELSB         = $15   'LORA
     RXPACKETCNTVALUEMSB         = $16   'LORA
     RXPACKETCNTVALUELSB         = $17   'LORA
+
     MODEMSTAT                   = $18   'LORA
+        FLD_RXCODINGRATE        = 5
+        BITS_RXCODINGRATE       = %111
+        BITS_MODEMSTATUS        = %11111
+
     PKTSNRVALUE                 = $19   'LORA
     PKTRSSIVALUE                = $1A   'LORA
     LORA_RSSIVALUE              = $1B   'LORA
