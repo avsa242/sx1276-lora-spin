@@ -31,6 +31,10 @@ CON
     DEVMODE_RXSINGLE        = %110
     DEVMODE_CAD             = %111
 
+' Transmit modes
+    TXMODE_NORMAL           = 0
+    TXMODE_CONT             = 1
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -73,6 +77,7 @@ PUB CarrierFreq(freq) | tmp, devmode_tmp
 ' Set carrier frequency, in Hz
 '   Valid values: See case table below
 '   Any other value polls the chip and returns the current setting
+'   NOTE: The default is 434_000_000
     tmp := $00_00_00
     readReg(core#FRFMSB, 3, @tmp)
     case freq
@@ -90,7 +95,7 @@ PUB CodeRate(rate) | tmp
 ' Set Error code rate
 '   Valid values:
 '                   k/n
-'       $04_05  =   4/5
+'      *$04_05  =   4/5
 '       $04_06  =   4/6
 '       $04_07  =   4/7
 '       $04_08  =   4/8
@@ -112,7 +117,7 @@ PUB DeviceMode(mode) | tmp
 ' Set device operating mode
 '   Valid values:
 '       DEVMODE_SLEEP (%000): Sleep
-'       DEVMODE_STDBY (%001): Standby
+'      *DEVMODE_STDBY (%001): Standby
 '       DEVMODE_FSTX (%010): Frequency synthesis TX
 '       DEVMODE_TX (%011): Transmit
 '       DEVMODE_FSRX (%100): Frequency synthesis RX
@@ -214,7 +219,7 @@ PUB RSSI
 
 PUB RxBW(Hz) | tmp
 ' Set receive bandwidth, in Hz
-'   Valid values: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, 125_000, 250_000, 500_000
+'   Valid values: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, *125_000, 250_000, 500_000
 '   Any other value polls the chip and returns the current setting
 '   NOTE: In the lower band, 250_000 and 500_000 are not supported
     tmp := $00
@@ -231,7 +236,7 @@ PUB RxBW(Hz) | tmp
 
 PUB SpreadingFactor(chips_sym) | tmp
 ' Set spreading factor rate, in chips per symbol
-'   Valid values: 64, 128, 256, 512, 1024, 2048, 4096
+'   Valid values: 64, *128, 256, 512, 1024, 2048, 4096
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readReg(core#MODEMCONFIG2, 1, @tmp)
@@ -244,6 +249,23 @@ PUB SpreadingFactor(chips_sym) | tmp
 
     tmp &= core#MASK_SPREADINGFACTOR
     tmp := (tmp | chips_sym) & core#MODEMCONFIG2_MASK
+    writeReg(core#MODEMCONFIG2, 1, @tmp)
+
+PUB TXMode(mode) | tmp
+' Set transmit mode
+'   Valid values:
+'      *TXMODE_NORMAL (0): Normal mode; a single packet is sent
+'       TXMODE_CONT (1): Continuous mode; send multiple packets across the FIFO
+    tmp := $00
+    readReg(core#MODEMCONFIG2, 1, @tmp)
+    case mode
+        TXMODE_NORMAL, TXMODE_CONT:
+            mode <<= core#FLD_TXCONTINUOUSMODE
+        OTHER:
+            return (tmp >> core#FLD_TXCONTINUOUSMODE) & %1
+
+    tmp &= core#MASK_TXCONTINUOUSMODE
+    tmp := (tmp | mode) & core#MODEMCONFIG2_MASK
     writeReg(core#MODEMCONFIG2, 1, @tmp)
 
 PUB Version
