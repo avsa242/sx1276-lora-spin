@@ -135,6 +135,23 @@ PUB HeaderInfoValid
 
     result := ((ModemStatus >> 3) & %1) * TRUE
 
+PUB ImplicitHeaderMode(enabled) | tmp
+' Enable implicit header mode
+'   Valid values:
+'       TRUE(-1 or 1), *FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#MODEMCONFIG1, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled & %1
+        OTHER:
+            return (tmp & %1) * TRUE
+
+    tmp &= core#MASK_IMPL_HEADERMODEON
+    tmp := (tmp | enabled) & core#MODEMCONFIG1_MASK
+    writeReg(core#MODEMCONFIG1, 1, @tmp)
+
 PUB LongRangeMode(mode) | tmp, devmode_tmp
 ' Set long-range mode
 '   Valid values:
