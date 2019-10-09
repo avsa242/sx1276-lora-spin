@@ -189,18 +189,6 @@ PUB ModemStatus
     readReg(core#MODEMSTAT, 1, @result)
     result &= core#BITS_MODEMSTATUS
 
-PUB RXOngoing
-' Return receive on-going status
-    result := ((ModemStatus >> 2) & %1) * TRUE
-
-PUB SignalDetected
-' Return signal detected
-    result := (ModemStatus & %1) * TRUE
-
-PUB SignalSynchronized
-' Return signal synchronized
-    result := ((ModemStatus >> 1) & %1) * TRUE
-
 PUB PacketRSSI
 ' RSSI of last packet received, in dBm
     readReg(core#PKTRSSIVALUE, 1, @result)
@@ -233,6 +221,10 @@ PUB RXBandwidth(Hz) | tmp
     tmp &= core#MASK_BW
     tmp := (tmp | Hz) & core#MODEMCONFIG1_MASK
     writeReg(core#MODEMCONFIG1, 1, @tmp)
+
+PUB RXOngoing
+' Return receive on-going status
+    result := ((ModemStatus >> 2) & %1) * TRUE
 
 PUB RXPayloadCRC(enabled) | tmp
 ' Enable CRC generation and check on payload
@@ -267,6 +259,14 @@ PUB RXTimeout(symbols) | tmp, symbtimeout_msb, symbtimeout_lsb
     tmp := (tmp | symbtimeout_msb) & core#MODEMCONFIG2_MASK
     writeReg(core#MODEMCONFIG2, 1, @tmp)
     writeReg(core#SYMBTIMEOUTLSB, 1, @symbtimeout_lsb)
+
+PUB SignalDetected
+' Return signal detected
+    result := (ModemStatus & %1) * TRUE
+
+PUB SignalSynchronized
+' Return signal synchronized
+    result := ((ModemStatus >> 1) & %1) * TRUE
 
 PUB SpreadingFactor(chips_sym) | tmp
 ' Set spreading factor rate, in chips per symbol
