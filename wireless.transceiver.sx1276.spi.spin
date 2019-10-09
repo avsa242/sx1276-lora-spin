@@ -136,6 +136,11 @@ PUB DeviceMode(mode) | tmp
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeReg(core#OPMODE, 1, @tmp)
 
+PUB FIFORXPointer
+' Current value of receive FIFO pointer
+'   Returns: Address of last byte written by LoRa receiver
+    readReg(core#FIFORXBYTEADDR, 1, @result)
+
 PUB HeaderInfoValid
 
     result := ((ModemStatus >> 3) & %1) * TRUE
