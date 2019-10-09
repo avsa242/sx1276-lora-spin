@@ -199,6 +199,19 @@ PUB PacketSNR
     readReg(core#PKTSNRVALUE, 1, @result)
     result := ~result / 4
 
+PUB PreambleLength(len) | tmp
+' Set preamble length, in bits
+'   Valid values: 0..65535
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#PREAMBLEMSB, 2, @tmp)
+    case len
+        0..65535:
+        OTHER:
+            return tmp
+
+    writeReg(core#PREAMBLEMSB, 2, @len)
+
 PUB RSSI
 ' Current RSSI, in dBm
     result := $00
