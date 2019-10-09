@@ -140,6 +140,21 @@ PUB HeaderInfoValid
 
     result := ((ModemStatus >> 3) & %1) * TRUE
 
+PUB HopPeriod(symb_periods) | tmp
+' Set symbol periods between frequency hops
+'   Valid values: 0..255
+'   Any other value polls the chip and returns the current setting
+'   NOTE: The first hop always occurs after the first header symbol
+'   NOTE: 0 effectively disables hopping
+    tmp := $00
+    readReg(core#HOPPERIOD, 1, @tmp)
+    case symb_periods
+        0..255:
+        OTHER:
+            return tmp
+
+    writeReg(core#HOPPERIOD, 1, @symb_periods)
+
 PUB ImplicitHeaderMode(enabled) | tmp
 ' Enable implicit header mode
 '   Valid values:
