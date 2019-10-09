@@ -250,6 +250,24 @@ PUB RXPayloadCRC(enabled) | tmp
     tmp := (tmp | enabled) & core#MODEMCONFIG2_MASK
     writeReg(core#MODEMCONFIG2, 1, @tmp)
 
+PUB RXTimeout(symbols) | tmp, symbtimeout_msb, symbtimeout_lsb
+' Set receive timeout, in symbols
+'   Valid values: 0..1023
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#MODEMCONFIG2, 2, @tmp) ' The top 2 bits of SYMBTIMEOUT are in this reg
+    case symbols                        '   the bottom 8 bits are in the next reg
+        0..1023:
+            symbtimeout_msb := symbols >> 8
+            symbtimeout_lsb := symbols & $FF
+        OTHER:
+            result := tmp & core#BITS_SYMBTIMEOUT
+
+    tmp &= core#MASK_SYMBTIMEOUTMSB
+    tmp := (tmp | symbtimeout_msb) & core#MODEMCONFIG2_MASK
+    writeReg(core#MODEMCONFIG2, 1, @tmp)
+    writeReg(core#SYMBTIMEOUTLSB, 1, @symbtimeout_lsb)
+
 PUB SpreadingFactor(chips_sym) | tmp
 ' Set spreading factor rate, in chips per symbol
 '   Valid values: 64, *128, 256, 512, 1024, 2048, 4096
