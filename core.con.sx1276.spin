@@ -167,7 +167,14 @@ CON
     MAXPAYLOADLENGTH            = $23   'LORA
     HOPPERIOD                   = $24   'LORA
     FIFORXBYTEADDR              = $25   'LORA
+
     MODEMCONFIG3                = $26   'LORA
+    MODEMCONFIG3_MASK           = $0C
+        FLD_LOWDATARATEOPTIMIZE = 3
+        FLD_AGCAUTOON           = 2
+        MASK_LOWDATARATEOPTIMIZE= MODEMCONFIG3_MASK ^ (1 << FLD_LOWDATARATEOPTIMIZE)
+        MASK_AGCAUTOON          = MODEMCONFIG3_MASK ^ (1 << FLD_AGCAUTOON)
+
 ' $27 - RESERVED
     LORA_FEIMSB                 = $28   'LORA
     LORA_FEIMID                 = $29   'LORA

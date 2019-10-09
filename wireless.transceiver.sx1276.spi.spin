@@ -200,6 +200,24 @@ PUB LongRangeMode(mode) | tmp, devmode_tmp
     writeReg(core#OPMODE, 1, @tmp)
     DeviceMode(devmode_tmp)
 
+PUB LowDataRateOptimize(enabled) | tmp
+' Optimize for low data rates
+'   Valid values:
+'       TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+'   NOTE: This setting is mandated when the symbol length exceeds 16ms
+    tmp := $00
+    readReg(core#MODEMCONFIG3, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_LOWDATARATEOPTIMIZE
+        OTHER:
+            return ((tmp >> core#FLD_LOWDATARATEOPTIMIZE) & %1) * TRUE
+
+    tmp &= core#MASK_LOWDATARATEOPTIMIZE
+    tmp := (tmp | enabled) & core#MODEMCONFIG3_MASK
+    writeReg(core#MODEMCONFIG3, 1, @tmp)
+
 PUB ModemClear
 ' Return modem clear status
     result := ((ModemStatus >> 4) & %1) * TRUE
