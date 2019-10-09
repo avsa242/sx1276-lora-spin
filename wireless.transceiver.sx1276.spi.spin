@@ -73,6 +73,23 @@ PUB Stop
 
     spi.stop
 
+PUB AGC(enabled) | tmp
+' Enable AGC
+'   Valid values:
+'       TRUE(-1 or 1), *FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#MODEMCONFIG3, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := (||enabled & %1) << core#FLD_AGCAUTOON
+        OTHER:
+            return ((tmp >> core#FLD_AGCAUTOON) & %1) * TRUE
+
+    tmp &= core#MASK_AGCAUTOON
+    tmp := (tmp | enabled) & core#MODEMCONFIG3_MASK
+    writeReg(core#MODEMCONFIG3, 1, @tmp)
+
 PUB CarrierFreq(freq) | tmp, devmode_tmp
 ' Set carrier frequency, in Hz
 '   Valid values: See case table below
