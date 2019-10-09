@@ -200,7 +200,7 @@ PUB PacketSNR
     result := ~result / 4
 
 PUB PayloadLength(len) | tmp
-' Set payload  length, in bytes
+' Set payload length, in bytes
 '   Valid values: 1..255
 '   Any other value polls the chip and returns the current setting
     tmp := $00
@@ -211,6 +211,21 @@ PUB PayloadLength(len) | tmp
             return tmp
 
     writeReg(core#PAYLOADLENGTH, 1, @len)
+
+PUB PayloadMaxLength(len) | tmp
+' Set payload maximum length, in bytes
+'   Valid values: 0..255
+'   Any other value polls the chip and returns the current setting
+'   NOTE: If header payload length exceeds this value, a header CRC error is generated,
+'       allowing filtering of packets with a bad size
+    tmp := $00
+    readReg(core#MAXPAYLOADLENGTH, 1, @tmp)
+    case len
+        0..255:
+        OTHER:
+            return tmp
+
+    writeReg(core#MAXPAYLOADLENGTH, 1, @len)
 
 PUB PreambleLength(len) | tmp
 ' Set preamble length, in bits
