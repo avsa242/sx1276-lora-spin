@@ -15,6 +15,7 @@ CON
 
     FXOSC                   = 32_000_000
     TWO_19                  = 1 << 19
+    TWO_24                  = 1 << 24
     FPSCALE                 = 1_000_000
     FSTEP                   = 61035156  ' (FXOSC / TWO_19) * FPSCALE
 ' Long-range modes
@@ -165,6 +166,14 @@ PUB DeviceMode(mode) | tmp
     tmp &= core#MASK_MODE
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeReg(core#OPMODE, 1, @tmp)
+
+PUB FreqError | tmp, bw
+' Estimated frequency error from modem
+    tmp := $0_00_00
+    readReg(core#FEIMSB, 3, @tmp)
+    bw := RXBandwidth (-2)
+    result := u64.MultDiv (tmp, TWO_24, FXOSC)
+    return result * (bw / 500)
 
 PUB FIFORXPointer
 ' Current value of receive FIFO pointer
