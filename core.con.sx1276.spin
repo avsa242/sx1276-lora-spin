@@ -175,7 +175,7 @@ CON
         MASK_LOWDATARATEOPTIMIZE= MODEMCONFIG3_MASK ^ (1 << FLD_LOWDATARATEOPTIMIZE)
         MASK_AGCAUTOON          = MODEMCONFIG3_MASK ^ (1 << FLD_AGCAUTOON)
 
-' $27 - RESERVED
+    PPMCORRECTION               = $27   'LORA
     LORA_FEIMSB                 = $28   'LORA
     LORA_FEIMID                 = $29   'LORA
     LORA_FEILSB                 = $2A   'LORA

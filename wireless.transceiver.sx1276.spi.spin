@@ -130,6 +130,19 @@ PUB CodeRate(rate) | tmp
     tmp := (tmp | rate) & core#MODEMCONFIG1_MASK
     writeReg(core#MODEMCONFIG1, 1, @tmp)
 
+PUB DataRateCorrection(ppm) | tmp
+' Set data rate offset value used in conjunction with AFC, in ppm
+'   Valid values: 0..255
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#PPMCORRECTION, 1, @tmp)
+    case ppm
+        0..255:
+        OTHER:
+            return tmp
+
+    writeReg(core#PPMCORRECTION, 1, @ppm)
+
 PUB DeviceMode(mode) | tmp
 ' Set device operating mode
 '   Valid values:
