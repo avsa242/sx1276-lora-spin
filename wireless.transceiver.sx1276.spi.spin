@@ -267,6 +267,10 @@ PUB IntMask(mask) | tmp
 
     writeReg(core#IRQFLAGS_MASK, 1, @tmp)
 
+PUB LastPacketBytes
+' Returns number of payload bytes of last packet received
+    readReg(core#FIFORXBYTESNB, 1, @result)
+
 PUB LongRangeMode(mode) | tmp
 ' Set long-range mode
 '   Valid values:
