@@ -6,7 +6,7 @@
         LoRa/FSK/OOK transceiver
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 6, 2019
+    Updated Oct 10, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -291,6 +291,31 @@ PUB OverCurrentProt(enabled) | tmp
 
     tmp &= core#MASK_OCPON
     tmp := (tmp | enabled) & core#OCP_MASK
+    writeReg(core#OCP, 1, @tmp)
+
+PUB OverCurrentTrim(mA) | tmp
+' Trim over-current protection, to milliamps
+'   Valid values: 45..240mA
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#OCP, 1, @tmp)
+    case mA
+        45..120:
+            mA := (mA - 45) / 5
+        130..240:
+            mA := (mA - -30) / 10
+        OTHER:
+            result := tmp & core#BITS_OCPTRIM
+            case result
+                0..15:
+                    return 45 + 5 * result
+                16..27:
+                    return -30 + 10 * result
+                28..31:
+                    return 240
+
+    tmp &= core#MASK_OCPTRIM
+    tmp := (tmp | mA) & core#OCP_MASK
     writeReg(core#OCP, 1, @tmp)
 
 PUB PacketRSSI

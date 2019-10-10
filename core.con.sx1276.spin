@@ -5,7 +5,7 @@
     Description: Low-level constants
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 7, 2019
+    Updated Oct 10, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
