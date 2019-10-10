@@ -143,7 +143,12 @@ CON
     PKTSNRVALUE                 = $19   'LORA
     PKTRSSIVALUE                = $1A   'LORA
     LORA_RSSIVALUE              = $1B   'LORA
+
     HOPCHANNEL                  = $1C   'LORA
+        FLD_PLLTIMEOUT          = 7
+        FLD_CRCONPAYLOAD        = 6
+        FLD_FHSSPRESENTCHANNEL  = 0
+        BITS_FHSSPRESENTCHANNEL = %111111
 
     MODEMCONFIG1                = $1D   'LORA
     MODEMCONFIG1_MASK           = $FF

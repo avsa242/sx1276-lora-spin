@@ -198,6 +198,11 @@ PUB HeaderInfoValid
 
     result := ((ModemStatus >> 3) & %1) * TRUE
 
+PUB HopChannel
+' Returns current frequency hopping channel
+    readReg(core#HOPCHANNEL, 1, @result)
+    result &= core#BITS_FHSSPRESENTCHANNEL
+
 PUB HopPeriod(symb_periods) | tmp
 ' Set symbol periods between frequency hops
 '   Valid values: 0..255
