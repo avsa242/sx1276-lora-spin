@@ -39,7 +39,12 @@ CON
     FRFMID                      = $07
     FRFLSB                      = $08
     PACONFIG                    = $09
+
     PARAMP                      = $0A
+    PARAMP_MASK                 = $0F
+        FLD_PARAMP              = 0
+        BITS_PARAMP             = %1111
+
     OCP                         = $0B
     LNA                         = $0C
     DIOMAPPING1                 = $40

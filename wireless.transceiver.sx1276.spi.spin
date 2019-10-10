@@ -180,6 +180,20 @@ PUB FIFORXPointer
 '   Returns: Address of last byte written by LoRa receiver
     readReg(core#FIFORXBYTEADDR, 1, @result)
 
+PUB FSKRampTime(uSec) | tmp
+' Set Rise/fall time of FSK ramp up/down, in microseconds
+'   Valid values: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#PARAMP, 1, @tmp)
+    case uSec
+        3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10:
+            uSec := lookdownz(uSec: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10) & core#BITS_PARAMP
+        OTHER:
+            return lookupz(tmp: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10) & core#BITS_PARAMP
+
+    writeReg(core#PARAMP, 1, @uSec)
+
 PUB HeaderInfoValid
 
     result := ((ModemStatus >> 3) & %1) * TRUE
