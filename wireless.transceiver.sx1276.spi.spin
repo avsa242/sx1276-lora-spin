@@ -230,6 +230,21 @@ PUB ImplicitHeaderMode(enabled) | tmp
     tmp := (tmp | enabled) & core#MODEMCONFIG1_MASK
     writeReg(core#MODEMCONFIG1, 1, @tmp)
 
+PUB Interrupt
+' Read interrupt flags
+'   Returns: Interrupt flags as a mask
+'   Bits set are asserted
+'   Bits %76543210
+'   Bit 7: Receive timeout
+'       6: Receive done
+'       5: Payload CRC error
+'       4: Valid header
+'       3: Transmit done
+'       2: CAD done
+'       1: FHSS change channel
+'       0: CAD detected
+    readReg(core#IRQFLAGS, 1, @result)
+
 PUB IntMask(mask) | tmp
 ' Set interrupt mask
 '   Valid values:
