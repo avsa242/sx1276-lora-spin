@@ -277,6 +277,14 @@ PUB LastHeaderCodingRate
     readReg(core#MODEMSTAT, 1, @result)
     result >>= 5
 
+PUB LastHeaderCRC
+' Indicates if last header received with CRC on
+'   Returns:
+'       0: Header indicates CRC is off
+'       1: Header indicates CRC is on
+    readReg(core#HOPCHANNEL, 1, @result)
+    result := (result >> core#FLD_CRCONPAYLOAD) & %1
+
 PUB LastPacketBytes
 ' Returns number of payload bytes of last packet received
     readReg(core#RXNBBYTES, 1, @result)
