@@ -267,6 +267,11 @@ PUB IntMask(mask) | tmp
 
     writeReg(core#IRQFLAGS_MASK, 1, @tmp)
 
+PUB LastHeaderCodingRate
+' Returns coding rate of last header received
+    readReg(core#MODEMSTAT, 1, @result)
+    result >>= 5
+
 PUB LastPacketBytes
 ' Returns number of payload bytes of last packet received
     readReg(core#RXNBBYTES, 1, @result)
@@ -517,6 +522,11 @@ PUB ValidHeadersReceived
 ' Returns number of valid headers received since last transition into receive mode
 '   NOTE: To reset counter, set device to DEVMODE_SLEEP
     readReg(core#RXHEADERCNTVALUEMSB, 2, @result)
+
+PUB ValidPacketsReceived
+' Returns number of valid packets received since last transition into receive mode
+'   NOTE: To reset counter, set device to DEVMODE_SLEEP
+    readReg(core#RXPACKETCNTVALUEMSB, 2, @result)
 
 PUB Version
 ' Version code of the chip
