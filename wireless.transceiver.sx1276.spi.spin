@@ -230,6 +230,28 @@ PUB ImplicitHeaderMode(enabled) | tmp
     tmp := (tmp | enabled) & core#MODEMCONFIG1_MASK
     writeReg(core#MODEMCONFIG1, 1, @tmp)
 
+PUB IntMask(mask) | tmp
+' Set interrupt mask
+'   Valid values:
+'       Bits %76543210
+'       Bit 7: Receive timeout
+'           6: Receive done
+'           5: Payload CRC error
+'           4: Valid header
+'           3: Transmit done
+'           2: CAD done
+'           1: FHSS change channel
+'           0: CAD detected
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#IRQFLAGS_MASK, 1, @tmp)
+    case mask
+        0..255:
+        OTHER:
+            return tmp
+
+    writeReg(core#IRQFLAGS_MASK, 1, @tmp)
+
 PUB LongRangeMode(mode) | tmp
 ' Set long-range mode
 '   Valid values:
