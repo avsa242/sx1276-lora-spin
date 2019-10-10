@@ -415,6 +415,15 @@ PUB PayloadMaxLength(len) | tmp
 
     writeReg(core#MAXPAYLOADLENGTH, 1, @len)
 
+PUB PLLLocked
+' Return PLL lock status, while attempting a TX, RX, or CAD operation
+'   Returns:
+'       0: PLL locked
+'       1: PLL didn't lock
+    readReg(core#HOPCHANNEL, 1, @result)
+    result := result >> core#FLD_PLLTIMEOUT
+    result &= %1
+
 PUB PreambleLength(len) | tmp
 ' Set preamble length, in bits
 '   Valid values: 0..65535
