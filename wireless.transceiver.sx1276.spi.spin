@@ -269,7 +269,7 @@ PUB IntMask(mask) | tmp
 
 PUB LastPacketBytes
 ' Returns number of payload bytes of last packet received
-    readReg(core#FIFORXBYTESNB, 1, @result)
+    readReg(core#RXNBBYTES, 1, @result)
 
 PUB LongRangeMode(mode) | tmp
 ' Set long-range mode
@@ -512,6 +512,11 @@ PUB TXMode(mode) | tmp
     tmp &= core#MASK_TXCONTINUOUSMODE
     tmp := (tmp | mode) & core#MODEMCONFIG2_MASK
     writeReg(core#MODEMCONFIG2, 1, @tmp)
+
+PUB ValidHeadersReceived
+' Returns number of valid headers received since last transition into receive mode
+'   NOTE: To reset counter, set device to DEVMODE_SLEEP
+    readReg(core#RXHEADERCNTVALUEMSB, 2, @result)
 
 PUB Version
 ' Version code of the chip
