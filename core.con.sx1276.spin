@@ -46,6 +46,13 @@ CON
         BITS_PARAMP             = %1111
 
     OCP                         = $0B
+    OCP_MASK                    = $3F
+        FLD_OCPON               = 5
+        FLD_OCPTRIM             = 0
+        BITS_OCPTRIM            = %11111
+        MASK_OCPON              = OCP_MASK ^ (1 << FLD_OCPON)
+        MASK_OCPTRIM            = OCP_MASK ^ (BITS_OCPTRIM << FLD_OCPTRIM)
+
     LNA                         = $0C
     DIOMAPPING1                 = $40
     DIOMAPPING2                 = $41

@@ -182,7 +182,7 @@ PUB FIFORXPointer
 
 PUB FSKRampTime(uSec) | tmp
 ' Set Rise/fall time of FSK ramp up/down, in microseconds
-'   Valid values: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12, 10
+'   Valid values: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, *40, 31, 25, 20, 15, 12, 10
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readReg(core#PARAMP, 1, @tmp)
@@ -275,6 +275,23 @@ PUB ModemStatus
 ' Return modem status bitmask
     readReg(core#MODEMSTAT, 1, @result)
     result &= core#BITS_MODEMSTATUS
+
+PUB OverCurrentProt(enabled) | tmp
+' Enable over-current protection for PA
+'   Valid values:
+'      *TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#OCP, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_OCPON
+        OTHER:
+            return ((tmp >> core#FLD_OCPON) & %1) * TRUE
+
+    tmp &= core#MASK_OCPON
+    tmp := (tmp | enabled) & core#OCP_MASK
+    writeReg(core#OCP, 1, @tmp)
 
 PUB PacketRSSI
 ' RSSI of last packet received, in dBm
