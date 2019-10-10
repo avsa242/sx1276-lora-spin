@@ -216,14 +216,13 @@ PUB ImplicitHeaderMode(enabled) | tmp
     tmp := (tmp | enabled) & core#MODEMCONFIG1_MASK
     writeReg(core#MODEMCONFIG1, 1, @tmp)
 
-PUB LongRangeMode(mode) | tmp, devmode_tmp
+PUB LongRangeMode(mode) | tmp
 ' Set long-range mode
 '   Valid values:
 '      *LRMODE_FSK_OOK (0): FSK, OOK packet radio mode
 '       LRMODE_LORA (1): LoRa radio mode
 '   Any other value polls the chip and returns the current setting
-'   NOTE: Changing this setting sets the chip to sleep mode while the mode is changed
-'       and subsequently changes it to the original state
+'   NOTE: You must set the DeviceMode to DEVMODE_SLEEP before changing this setting
     tmp := $00
     readReg(core#OPMODE, 1, @tmp)
     case mode
@@ -232,12 +231,9 @@ PUB LongRangeMode(mode) | tmp, devmode_tmp
         OTHER:
             return (tmp >> core#FLD_LONGRANGEMODE) & %1
 
-    devmode_tmp := DeviceMode(-2)
-    DeviceMode(DEVMODE_SLEEP)
     tmp &= core#MASK_LONGRANGEMODE
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeReg(core#OPMODE, 1, @tmp)
-    DeviceMode(devmode_tmp)
 
 PUB LowDataRateOptimize(enabled) | tmp
 ' Optimize for low data rates
