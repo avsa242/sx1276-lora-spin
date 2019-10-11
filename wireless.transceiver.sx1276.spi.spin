@@ -57,6 +57,10 @@ CON
     DIO5_MODEREADY          = %00 << CORE#FLD_DIO5MAPPING
     DIO5_CLKOUT             = %01 << CORE#FLD_DIO5MAPPING
 
+' Clock output modes
+    CLKOUT_RC               = 6
+    CLKOUT_OFF              = 7
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -129,6 +133,25 @@ PUB CarrierFreq(freq) | tmp, devmode_tmp
     DeviceMode (DEVMODE_STDBY)
     writeReg(core#FRFMSB, 3, @freq)
     DeviceMode (devmode_tmp)
+
+PUB ClkOut(divisor) | tmp
+' Set clkout frequency, as a divisor of FXOSC
+'   Valid values:
+'       1, 2, 4, 8, 16, 32, CLKOUT_RC (6), CLKOUT_OFF (7)
+'   Any other value polls the chip and returns the current setting
+'   NOTE: For optimal efficiency, it is recommended to disable the clock output (CLKOUT_OFF)
+'       unless needed
+    tmp := $00
+    readReg(core#OSC, 1, @tmp)
+    case divisor
+        1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF:
+            divisor := lookdownz(divisor: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
+        OTHER:
+            result := tmp & core#BITS_CLKOUT
+            return lookupz(result: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
+    tmp &= core#MASK_CLKOUT
+    tmp := (tmp | divisor) & core#OSC_MASK
+    writeReg(core#OSC, 1, @tmp)
 
 PUB CodeRate(rate) | tmp
 ' Set Error code rate

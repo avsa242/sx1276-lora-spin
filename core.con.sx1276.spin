@@ -108,7 +108,15 @@ CON
     RXTIMEOUT2                  = $21
     RXTIMEOUT3                  = $22
     RXDELAY                     = $23
+
     OSC                         = $24
+    OSC_MASK                    = $0F
+        FLD_RCCALSTART          = 3
+        FLD_CLKOUT              = 0
+        BITS_CLKOUT             = %111
+        MASK_RCCALSTART         = OSC_MASK ^ (1 << FLD_RCCALSTART)
+        MASK_CLKOUT             = OSC_MASK ^ (BITS_CLKOUT << FLD_CLKOUT)
+
     PREAMBLEMSB                 = $25
     PREAMBLELSB                 = $26
     SYNCCONFIG                  = $27
