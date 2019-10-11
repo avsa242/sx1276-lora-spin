@@ -5,7 +5,7 @@
     Description: Low-level constants
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 10, 2019
+    Updated Oct 11, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -54,8 +54,25 @@ CON
         MASK_OCPTRIM            = OCP_MASK ^ (BITS_OCPTRIM << FLD_OCPTRIM)
 
     LNA                         = $0C
+
     DIOMAPPING1                 = $40
+    DIOMAPPING1_MASK            = $FF
+        FLD_DIO0MAPPING         = 6
+        FLD_DIO1MAPPING         = 4
+        FLD_DIO2MAPPING         = 2
+        FLD_DIO3MAPPING         = 0
+        MASK_DIO0MAPPING        = DIOMAPPING1_MASK ^ (1 << FLD_DIO0MAPPING)
+        MASK_DIO1MAPPING        = DIOMAPPING1_MASK ^ (1 << FLD_DIO1MAPPING)
+        MASK_DIO2MAPPING        = DIOMAPPING1_MASK ^ (1 << FLD_DIO2MAPPING)
+        MASK_DIO3MAPPING        = DIOMAPPING1_MASK ^ (1 << FLD_DIO3MAPPING)
+
     DIOMAPPING2                 = $41
+    DIOMAPPING2_MASK            = $F1
+        FLD_DIO4MAPPING         = 6
+        FLD_DIO5MAPPING         = 4
+        MASK_DIO4MAPPING        = DIOMAPPING2_MASK ^ (1 << FLD_DIO4MAPPING)
+        MASK_DIO5MAPPING        = DIOMAPPING2_MASK ^ (1 << FLD_DIO5MAPPING)
+
     VERSION                     = $42
     TCXO                        = $4B
     PADAC                       = $4D

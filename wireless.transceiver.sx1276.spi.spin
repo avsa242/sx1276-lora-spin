@@ -6,7 +6,7 @@
         LoRa/FSK/OOK transceiver
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 10, 2019
+    Updated Oct 11, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -35,6 +35,12 @@ CON
 ' Transmit modes
     TXMODE_NORMAL           = 0
     TXMODE_CONT             = 1
+
+' DIO function mapping
+    DIO0_RXDONE             = %00 << core#FLD_DIO0MAPPING
+    DIO0_TXDONE             = %01 << core#FLD_DIO0MAPPING
+    DIO0_CADDONE            = %10 << core#FLD_DIO0MAPPING
+
 
 VAR
 
@@ -166,6 +172,22 @@ PUB DeviceMode(mode) | tmp
     tmp &= core#MASK_MODE
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeReg(core#OPMODE, 1, @tmp)
+
+PUB DIO0(mode) | tmp
+' Assert DIO0 pin on set mode
+'   Valid values:
+'       DIO0_RXDONE (0) - Packet reception complete
+'       DIO0_TXDONE (64) - FIFO payload transmission complete
+'       DIO0_CADDONE (128) - Channel Activity Detected
+    readReg(core#DIOMAPPING1, 1, @tmp)
+    case mode
+        DIO0_RXDONE, DIO0_TXDONE, DIO0_CADDONE:
+        OTHER:
+            return (tmp >> core#FLD_DIO0MAPPING) & %11
+
+    tmp &= core#MASK_DIO0MAPPING
+    tmp := (tmp | mode) & core#DIOMAPPING1_MASK
+    writeReg(core#DIOMAPPING1, 1, @tmp)
 
 PUB FreqError | tmp, bw
 ' Estimated frequency error from modem
