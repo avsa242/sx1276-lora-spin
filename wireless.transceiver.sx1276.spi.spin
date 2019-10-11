@@ -41,6 +41,21 @@ CON
     DIO0_TXDONE             = %01 << core#FLD_DIO0MAPPING
     DIO0_CADDONE            = %10 << core#FLD_DIO0MAPPING
 
+    DIO1_RXTIMEOUT          = %00 << CORE#FLD_DIO1MAPPING
+    DIO1_FHSSCHANGECHANNEL  = %01 << CORE#FLD_DIO1MAPPING
+    DIO1_CADDETECTED        = %10 << CORE#FLD_DIO1MAPPING
+
+    DIO2_FHSSCHANGECHANNEL  = %00
+
+    DIO3_CADDONE            = %00 << CORE#FLD_DIO3MAPPING
+    DIO3_VALIDHEADER        = %01 << CORE#FLD_DIO3MAPPING
+    DIO3_PAYLOADCRCERROR    = %10 << CORE#FLD_DIO3MAPPING
+
+    DIO4_CADDETECTED        = %00 << CORE#FLD_DIO4MAPPING
+    DIO4_PLLLOCK            = %01 << CORE#FLD_DIO4MAPPING
+
+    DIO5_MODEREADY          = %00 << CORE#FLD_DIO5MAPPING
+    DIO5_CLKOUT             = %01 << CORE#FLD_DIO5MAPPING
 
 VAR
 
@@ -188,6 +203,86 @@ PUB DIO0(mode) | tmp
     tmp &= core#MASK_DIO0MAPPING
     tmp := (tmp | mode) & core#DIOMAPPING1_MASK
     writeReg(core#DIOMAPPING1, 1, @tmp)
+
+PUB DIO1(mode) | tmp
+' Assert DIO1 pin on set mode
+'   Valid values:
+'       DIO1_RXTIMEOUT (0) - Packet reception timed out
+'       DIO1_FHSSCHANGECHANNEL (64) - FHSS Changed channel
+'       DIO1_CADDETECTED (128) - Channel Activity Detected
+    readReg(core#DIOMAPPING1, 1, @tmp)
+    case mode
+        DIO1_RXTIMEOUT, DIO1_FHSSCHANGECHANNEL, DIO1_CADDETECTED:
+        OTHER:
+            return (tmp >> core#FLD_DIO1MAPPING) & %11
+
+    tmp &= core#MASK_DIO1MAPPING
+    tmp := (tmp | mode) & core#DIOMAPPING1_MASK
+    writeReg(core#DIOMAPPING1, 1, @tmp)
+
+PUB DIO2(mode) | tmp
+' Assert DIO2 pin on set mode
+'   Valid values:
+'       DIO2_FHSSCHANGECHANNEL (0) - FHSS Changed channel
+'       DIO2_FHSSCHANGECHANNEL (64) - FHSS Changed channel
+'       DIO2_FHSSCHANGECHANNEL (128) - FHSS Changed channel
+    readReg(core#DIOMAPPING1, 1, @tmp)
+    case mode
+        DIO2_FHSSCHANGECHANNEL:
+        OTHER:
+            return (tmp >> core#FLD_DIO2MAPPING) & %11
+
+    tmp &= core#MASK_DIO2MAPPING
+    tmp := (tmp | mode) & core#DIOMAPPING1_MASK
+    writeReg(core#DIOMAPPING1, 1, @tmp)
+
+PUB DIO3(mode) | tmp
+' Assert DIO3 pin on set mode
+'   Valid values:
+'       DIO3_CADDONE (0) - Channel Activity Detection complete
+'       DIO3_VALIDHEADER (64) - Valider header received in RX mode
+'       DIO3_PAYLOADCRCERROR (128) - CRC error in received payload
+    readReg(core#DIOMAPPING1, 1, @tmp)
+    case mode
+        DIO3_CADDONE, DIO3_VALIDHEADER, DIO3_PAYLOADCRCERROR:
+        OTHER:
+            return (tmp >> core#FLD_DIO3MAPPING) & %11
+
+    tmp &= core#MASK_DIO3MAPPING
+    tmp := (tmp | mode) & core#DIOMAPPING1_MASK
+    writeReg(core#DIOMAPPING1, 1, @tmp)
+
+PUB DIO4(mode) | tmp
+' Assert DIO4 pin on set mode
+'   Valid values:
+'       DIO4_CADDETECTED (0) - Channel Activity Detected
+'       DIO4_PLLLOCK (64) - PLL Locked
+'       DIO4_PLLLOCK (128) - PLL Locked
+    readReg(core#DIOMAPPING2, 1, @tmp)
+    case mode
+        DIO4_CADDETECTED, DIO4_PLLLOCK:
+        OTHER:
+            return (tmp >> core#FLD_DIO4MAPPING) & %11
+
+    tmp &= core#MASK_DIO4MAPPING
+    tmp := (tmp | mode) & core#DIOMAPPING2_MASK
+    writeReg(core#DIOMAPPING2, 1, @tmp)
+
+PUB DIO5(mode) | tmp
+' Assert DIO5 pin on set mode
+'   Valid values:
+'       DIO5_MODEREADY (0) - Requested operation mode is ready
+'       DIO5_CLKOUT (64) - Output system clock
+'       DIO5_CLKOUT (128) - Output system clock
+    readReg(core#DIOMAPPING2, 1, @tmp)
+    case mode
+        DIO5_MODEREADY, DIO5_CLKOUT:
+        OTHER:
+            return (tmp >> core#FLD_DIO5MAPPING) & %11
+
+    tmp &= core#MASK_DIO5MAPPING
+    tmp := (tmp | mode) & core#DIOMAPPING2_MASK
+    writeReg(core#DIOMAPPING2, 1, @tmp)
 
 PUB FreqError | tmp, bw
 ' Estimated frequency error from modem
