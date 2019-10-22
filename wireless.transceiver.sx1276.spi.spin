@@ -328,6 +328,50 @@ PUB FreqError | tmp, bw
     result := u64.MultDiv (tmp, TWO_24, FXOSC)
     return result * (bw / 500)
 
+PUB FIFOAddrPointer(fifo_ptr) | tmp
+' Set SPI interface address pointer in FIFO data buffer
+'   Valid values: $00..$FF
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#FIFOADDRPTR, 1, @tmp)
+    case fifo_ptr
+        $00..$FF:
+        OTHER:
+            return tmp
+
+    writeReg(core#FIFOADDRPTR, 1, @fifo_ptr)
+
+PUB FIFORXBasePtr(addr) | tmp
+' Set start address within FIFO for received data
+'   Valid values: $00..$FF
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#FIFORXBASEADDR, 1, @tmp)
+    case addr
+        $00..$FF:
+        OTHER:
+            return tmp
+
+    writeReg(core#FIFORXBASEADDR, 1, @addr)
+
+PUB FIFOTXBasePtr(addr) | tmp
+' Set start address within FIFO for transmitted data
+'   Valid values: $00..$FF
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#FIFOTXBASEADDR, 1, @tmp)
+    case addr
+        $00..$FF:
+        OTHER:
+            return tmp
+
+    writeReg(core#FIFOTXBASEADDR, 1, @addr)
+
+PUB FIFORXCurrentAddr
+' Start address (in FIFO) of last packet received
+'   Returns: Starting address of last packet received
+    readReg(core#FIFORXCURRENTADDR, 1, @result)
+
 PUB FIFORXPointer
 ' Current value of receive FIFO pointer
 '   Returns: Address of last byte written by LoRa receiver
@@ -617,6 +661,16 @@ PUB RXBandwidth(Hz) | tmp
     tmp := (tmp | Hz) & core#MODEMCONFIG1_MASK
     writeReg(core#MODEMCONFIG1, 1, @tmp)
 
+PUB RXData(nr_bytes, buff_addr)
+' Receive data from RX FIFO into buffer at buff_addr
+'   Valid values: nr_bytes - 1..255
+'   Any other value is ignored
+    case nr_bytes
+        1..255:
+            readReg(core#FIFO, nr_bytes, buff_addr)
+        OTHER:
+            return FALSE
+
 PUB RXOngoing
 ' Return receive on-going status
     result := ((ModemStatus >> 2) & %1) * TRUE
@@ -680,6 +734,16 @@ PUB SpreadingFactor(chips_sym) | tmp
     tmp &= core#MASK_SPREADINGFACTOR
     tmp := (tmp | chips_sym) & core#MODEMCONFIG2_MASK
     writeReg(core#MODEMCONFIG2, 1, @tmp)
+
+PUB TXData(nr_bytes, buff_addr) | tmp
+' Queue data to be transmitted in the TX FIFO
+'   nr_bytes Valid values: 1..255
+'   Any other value is ignored
+    case nr_bytes
+        1..255:
+            writeReg (core#FIFO, nr_bytes, buff_addr)
+        OTHER:
+            return FALSE
 
 PUB TXMode(mode) | tmp
 ' Set transmit mode
