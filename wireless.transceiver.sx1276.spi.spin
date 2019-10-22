@@ -508,6 +508,23 @@ PUB LastPacketBytes
 ' Returns number of payload bytes of last packet received
     readReg(core#RXNBBYTES, 1, @result)
 
+PUB LNA(gain) | tmp
+' Set LNA gain, in dB
+'   Valid values: *0 (Maximum gain), -6 , -12, -24, -26, -48
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#LNA, 1, @tmp)
+    case gain
+        0, -6, -12, -24, -26, -48:
+            gain := lookdown(gain: 0, -6, -12, -24, -26, -48) << core#FLD_LNAGAIN
+        OTHER:
+            result := (tmp >> core#FLD_LNAGAIN) & core#BITS_LNAGAIN
+            return lookup(result: 0, -6, -12, -24, -26, -48)
+
+    tmp &= core#MASK_LNAGAIN
+    tmp := (tmp | gain) & core#LNA_MASK
+    writeReg(core#LNA, 1, @tmp)
+
 PUB LongRangeMode(mode) | tmp
 ' Set long-range mode
 '   Valid values:
