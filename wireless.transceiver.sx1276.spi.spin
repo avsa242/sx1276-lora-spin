@@ -446,10 +446,11 @@ PUB ImplicitHeaderMode(enabled) | tmp
     tmp := (tmp | enabled) & core#MODEMCONFIG1_MASK
     writeReg(core#MODEMCONFIG1, 1, @tmp)
 
-PUB Interrupt
-' Read interrupt flags
+PUB Interrupt(clear_mask)
+' Read or clear interrupt flags
 '   Returns: Interrupt flags as a mask
 '   Bits set are asserted
+'   Set bits to clear the corresponding interrupt flags
 '   Bits %76543210
 '   Bit 7: Receive timeout
 '       6: Receive done
@@ -459,7 +460,13 @@ PUB Interrupt
 '       2: CAD done
 '       1: FHSS change channel
 '       0: CAD detected
+    result := $00
     readReg(core#IRQFLAGS, 1, @result)
+    case clear_mask
+        %0000_0001..%1111_1111:
+            writeReg(core#IRQFLAGS, 1, @clear_mask)
+        OTHER:
+            return
 
 PUB IntMask(mask) | tmp
 ' Set interrupt mask
