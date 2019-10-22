@@ -539,7 +539,9 @@ PUB PacketRSSI
 PUB PacketSNR
 ' Signal to noise ratio of last packet received, in dB (estimated)
     readReg(core#PKTSNRVALUE, 1, @result)
-    result := ~result / 4
+    if result & $80
+        -result
+    result := result / 4
 
 PUB PayloadLength(len) | tmp
 ' Set payload length, in bytes
