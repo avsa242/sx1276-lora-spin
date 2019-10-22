@@ -198,7 +198,7 @@ CON
 
     MODEMCONFIG2                = $1E   'LORA
     MODEMCONFIG2_MASK           = $FF
-        FLD_SPREADINGFACTOR     = 7
+        FLD_SPREADINGFACTOR     = 4
         FLD_TXCONTINUOUSMODE    = 3
         FLD_RXPAYLOADCRCON      = 2
         FLD_SYMBTIMEOUT_MSB     = 0
