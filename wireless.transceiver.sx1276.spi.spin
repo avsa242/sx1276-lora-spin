@@ -650,6 +650,7 @@ PUB RXTimeout(symbols) | tmp, symbtimeout_msb, symbtimeout_lsb
         OTHER:
             result := tmp & core#BITS_SYMBTIMEOUT
 
+    tmp >>= 8
     tmp &= core#MASK_SYMBTIMEOUTMSB
     tmp := (tmp | symbtimeout_msb) & core#MODEMCONFIG2_MASK
     writeReg(core#MODEMCONFIG2, 1, @tmp)
