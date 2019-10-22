@@ -406,7 +406,8 @@ PUB Interrupt
 PUB IntMask(mask) | tmp
 ' Set interrupt mask
 '   Valid values:
-'       Bits %76543210
+'       Set a bit to disable the interrupt flag
+'       Bits: 76543210
 '       Bit 7: Receive timeout
 '           6: Receive done
 '           5: Payload CRC error
@@ -423,7 +424,7 @@ PUB IntMask(mask) | tmp
         OTHER:
             return tmp
 
-    writeReg(core#IRQFLAGS_MASK, 1, @tmp)
+    writeReg(core#IRQFLAGS_MASK, 1, @mask)
 
 PUB LastHeaderCodingRate
 ' Returns coding rate of last header received
