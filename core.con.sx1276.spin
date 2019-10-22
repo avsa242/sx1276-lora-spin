@@ -54,7 +54,16 @@ CON
         MASK_OCPTRIM            = OCP_MASK ^ (BITS_OCPTRIM << FLD_OCPTRIM)
 
     LNA                         = $0C
-
+    LNA_MASK                    = $FB
+        FLD_LNAGAIN             = 5
+        FLD_LNABOOSTLF          = 3
+        FLD_LNABOOSTHF          = 0
+        BITS_LNAGAIN            = %111
+        BITS_LNABOOSTLF         = %11
+        BITS_LNABOOSTHF         = %11
+        MASK_LNAGAIN            = LNA_MASK ^ (BITS_LNAGAIN << FLD_LNAGAIN)
+        MASK_LNABOOSTLF         = LNA_MASK ^ (BITS_LNABOOSTLF << FLD_LNABOOSTLF)
+        MASK_LNABOOSTHF         = LNA_MASK ^ (BITS_LNABOOSTHF << FLD_LNABOOSTHF)
 
     DIOMAPPING1                 = $40
     DIOMAPPING1_MASK            = $FF
