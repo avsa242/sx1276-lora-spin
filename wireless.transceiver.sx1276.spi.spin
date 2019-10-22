@@ -586,13 +586,13 @@ PUB PreambleLength(len) | tmp
 '   Valid values: 0..65535
 '   Any other value polls the chip and returns the current setting
     tmp := $00
-    readReg(core#PREAMBLEMSB, 2, @tmp)
+    readReg(core#LORA_PREAMBLEMSB, 2, @tmp)
     case len
         0..65535:
         OTHER:
             return tmp
 
-    writeReg(core#PREAMBLEMSB, 2, @len)
+    writeReg(core#LORA_PREAMBLEMSB, 2, @len)
 
 PUB RSSI
 ' Current RSSI, in dBm
