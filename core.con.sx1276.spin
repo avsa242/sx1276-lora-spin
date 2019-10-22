@@ -23,7 +23,7 @@ CON
 ' General/shared functionality
     FIFO                        = $00
     OPMODE                      = $01
-    OPMODE_MASK                 = $EF
+    OPMODE_MASK                 = $CF
         FLD_LONGRANGEMODE       = 7
         FLD_MODULATIONTYPE      = 5
         FLD_LOWFREQUENCYMODEON  = 3
@@ -54,6 +54,7 @@ CON
         MASK_OCPTRIM            = OCP_MASK ^ (BITS_OCPTRIM << FLD_OCPTRIM)
 
     LNA                         = $0C
+
 
     DIOMAPPING1                 = $40
     DIOMAPPING1_MASK            = $FF
