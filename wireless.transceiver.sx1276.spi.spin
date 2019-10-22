@@ -6,7 +6,7 @@
         LoRa/FSK/OOK transceiver
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 11, 2019
+    Updated Oct 22, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -166,7 +166,7 @@ PUB CodeRate(rate) | tmp
     readReg(core#MODEMCONFIG1, 1, @tmp)
     case rate
         $04_05..$04_08:
-            rate := lookdown(rate: $04_05, $04_06, $04_07, $04_08)
+            rate := lookdown(rate: $04_05, $04_06, $04_07, $04_08) << core#FLD_CODINGRATE
         OTHER:
             result := (tmp >> core#FLD_CODINGRATE) & core#BITS_CODINGRATE
             return lookup(result: $04_05, $04_06, $04_07, $04_08)
