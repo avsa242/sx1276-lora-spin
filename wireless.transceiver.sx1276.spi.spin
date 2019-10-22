@@ -562,6 +562,23 @@ PUB LowDataRateOptimize(enabled) | tmp
     tmp := (tmp | enabled) & core#MODEMCONFIG3_MASK
     writeReg(core#MODEMCONFIG3, 1, @tmp)
 
+PUB LowFreqMode(enabled) | tmp
+' Enable Low frequency-specific register access
+'   Valid values:
+'       TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#OPMODE, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := (||enabled << core#FLD_LOWFREQUENCYMODEON)
+        OTHER:
+            result := ((tmp >> core#FLD_LOWFREQUENCYMODEON) & %1) * TRUE
+            return
+    tmp &= core#MASK_LOWFREQUENCYMODEON
+    tmp := (tmp | enabled) & core#OPMODE_MASK
+    writeReg(core#OPMODE, 1, @tmp)
+
 PUB ModemClear
 ' Return modem clear status
     result := ((ModemStatus >> 4) & %1) * TRUE
