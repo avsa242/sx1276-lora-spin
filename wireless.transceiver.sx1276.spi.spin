@@ -534,7 +534,7 @@ PUB OverCurrentTrim(mA) | tmp
 PUB PacketRSSI
 ' RSSI of last packet received, in dBm
     readReg(core#PKTRSSIVALUE, 1, @result)
-    result := -137 + result
+    result := -157 + result
 
 PUB PacketSNR
 ' Signal to noise ratio of last packet received, in dB (estimated)
