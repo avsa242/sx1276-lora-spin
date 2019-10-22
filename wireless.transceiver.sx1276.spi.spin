@@ -548,13 +548,13 @@ PUB PayloadLength(len) | tmp
 '   Valid values: 1..255
 '   Any other value polls the chip and returns the current setting
     tmp := $00
-    readReg(core#PAYLOADLENGTH, 1, @tmp)
+    readReg(core#LORA_PAYLOADLENGTH, 1, @tmp)
     case len
         1..255:
         OTHER:
             return tmp
 
-    writeReg(core#PAYLOADLENGTH, 1, @len)
+    writeReg(core#LORA_PAYLOADLENGTH, 1, @len)
 
 PUB PayloadMaxLength(len) | tmp
 ' Set payload maximum length, in bytes
