@@ -721,7 +721,7 @@ PUB readReg(reg, nr_bytes, buf_addr) | i
 ' Read nr_bytes from register 'reg' to address 'buf_addr'
 
     case reg
-        $00..$16, $1A..$42, $44, $4B, $4D, $5B, $5D, $61..$64:
+        $00, $01, $06..$2A, $2C, $2F, $39, $40, $42, $44, $4B, $4D, $5B, $5D, $61..$64, $70:
         OTHER:
             return FALSE
 
@@ -735,7 +735,7 @@ PUB readReg(reg, nr_bytes, buf_addr) | i
 PUB writeReg(reg, nr_bytes, buf_addr) | i
 ' Write nr_bytes to register 'reg' stored at buf_addr
     case reg
-        $00..$16, $1A..$42, $44, $4B, $4D, $5B, $5D, $61..$64:
+        $00, $01, $06..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $39, $40, $44, $4B, $4D, $5D, $61..$64, $70:
         OTHER:
             return FALSE
 
