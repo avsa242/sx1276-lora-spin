@@ -135,6 +135,20 @@ PUB CarrierFreq(freq) | tmp, devmode_tmp
     writeReg(core#FRFMSB, 3, @freq)
     DeviceMode (devmode_tmp)
 
+PUB Channel(chan) | tmp
+' Set LoRa uplink channel
+'   Valid values: 0..63
+'   Any other value polls the chip and returns the current setting
+'   NOTE: US band plan (915MHz)
+    case chan
+        0..63:
+            tmp := 902_300_000 + (200_000 * chan)
+            CarrierFreq(tmp)
+        OTHER:
+            tmp := CarrierFreq(-2)
+            return (tmp - 902_300_000) / 200_000
+
+
 PUB ClkOut(divisor) | tmp
 ' Set clkout frequency, as a divisor of FXOSC
 '   Valid values:
