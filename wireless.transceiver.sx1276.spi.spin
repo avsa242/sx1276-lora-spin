@@ -790,6 +790,19 @@ PUB SpreadingFactor(chips_sym) | tmp
     tmp := (tmp | chips_sym) & core#MODEMCONFIG2_MASK
     writeReg(core#MODEMCONFIG2, 1, @tmp)
 
+PUB SyncWord(val) | tmp
+' Set LoRa Syncword
+'   Valid values: $00..$FF
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#SYNCWORD, 1, @tmp)
+    case val
+        $00..$FF:
+        OTHER:
+            return tmp
+
+    writeReg(core#SYNCWORD, 1, @val)
+
 PUB TXData(nr_bytes, buff_addr) | tmp
 ' Queue data to be transmitted in the TX FIFO
 '   nr_bytes Valid values: 1..255
