@@ -37,25 +37,26 @@ CON
     TXMODE_CONT             = 1
 
 ' DIO function mapping
-    DIO0_RXDONE             = %00 << core#FLD_DIO0MAPPING
-    DIO0_TXDONE             = %01 << core#FLD_DIO0MAPPING
-    DIO0_CADDONE            = %10 << core#FLD_DIO0MAPPING
+    DIO0_RXDONE             = %00
+    DIO0_TXDONE             = %01
+    DIO0_CADDONE            = %10
 
-    DIO1_RXTIMEOUT          = %00 << CORE#FLD_DIO1MAPPING
-    DIO1_FHSSCHANGECHANNEL  = %01 << CORE#FLD_DIO1MAPPING
-    DIO1_CADDETECTED        = %10 << CORE#FLD_DIO1MAPPING
+    DIO1_RXTIMEOUT          = %00
+    DIO1_FHSSCHANGECHANNEL  = %01
+    DIO1_CADDETECTED        = %10
 
     DIO2_FHSSCHANGECHANNEL  = %00
+    DIO2_SYNCADDRESS        = %11
 
-    DIO3_CADDONE            = %00 << CORE#FLD_DIO3MAPPING
-    DIO3_VALIDHEADER        = %01 << CORE#FLD_DIO3MAPPING
-    DIO3_PAYLOADCRCERROR    = %10 << CORE#FLD_DIO3MAPPING
+    DIO3_CADDONE            = %00
+    DIO3_VALIDHEADER        = %01
+    DIO3_PAYLOADCRCERROR    = %10
 
-    DIO4_CADDETECTED        = %00 << CORE#FLD_DIO4MAPPING
-    DIO4_PLLLOCK            = %01 << CORE#FLD_DIO4MAPPING
+    DIO4_CADDETECTED        = %00
+    DIO4_PLLLOCK            = %01
 
-    DIO5_MODEREADY          = %00 << CORE#FLD_DIO5MAPPING
-    DIO5_CLKOUT             = %01 << CORE#FLD_DIO5MAPPING
+    DIO5_MODEREADY          = %00
+    DIO5_CLKOUT             = %01
 
 ' Clock output modes
     CLKOUT_RC               = 6
@@ -217,9 +218,11 @@ PUB DIO0(mode) | tmp
 '       DIO0_RXDONE (0) - Packet reception complete
 '       DIO0_TXDONE (64) - FIFO payload transmission complete
 '       DIO0_CADDONE (128) - Channel Activity Detected
+    tmp := $00
     readReg(core#DIOMAPPING1, 1, @tmp)
     case mode
         DIO0_RXDONE, DIO0_TXDONE, DIO0_CADDONE:
+            mode <<= core#FLD_DIO0MAPPING
         OTHER:
             return (tmp >> core#FLD_DIO0MAPPING) & %11
 
@@ -233,9 +236,11 @@ PUB DIO1(mode) | tmp
 '       DIO1_RXTIMEOUT (0) - Packet reception timed out
 '       DIO1_FHSSCHANGECHANNEL (64) - FHSS Changed channel
 '       DIO1_CADDETECTED (128) - Channel Activity Detected
+    tmp := $00
     readReg(core#DIOMAPPING1, 1, @tmp)
     case mode
         DIO1_RXTIMEOUT, DIO1_FHSSCHANGECHANNEL, DIO1_CADDETECTED:
+            mode <<= core#FLD_DIO1MAPPING
         OTHER:
             return (tmp >> core#FLD_DIO1MAPPING) & %11
 
@@ -249,9 +254,12 @@ PUB DIO2(mode) | tmp
 '       DIO2_FHSSCHANGECHANNEL (0) - FHSS Changed channel
 '       DIO2_FHSSCHANGECHANNEL (64) - FHSS Changed channel
 '       DIO2_FHSSCHANGECHANNEL (128) - FHSS Changed channel
+    tmp := $00
     readReg(core#DIOMAPPING1, 1, @tmp)
     case mode
-        DIO2_FHSSCHANGECHANNEL:
+        DIO2_FHSSCHANGECHANNEL, DIO2_SYNCADDRESS:
+            mode <<= core#FLD_DIO2MAPPING
+
         OTHER:
             return (tmp >> core#FLD_DIO2MAPPING) & %11
 
@@ -265,11 +273,13 @@ PUB DIO3(mode) | tmp
 '       DIO3_CADDONE (0) - Channel Activity Detection complete
 '       DIO3_VALIDHEADER (64) - Valider header received in RX mode
 '       DIO3_PAYLOADCRCERROR (128) - CRC error in received payload
+    tmp := $00
     readReg(core#DIOMAPPING1, 1, @tmp)
     case mode
         DIO3_CADDONE, DIO3_VALIDHEADER, DIO3_PAYLOADCRCERROR:
+            mode <<= core#FLD_DIO3MAPPING
         OTHER:
-            return (tmp >> core#FLD_DIO3MAPPING) & %11
+            return tmp & %11
 
     tmp &= core#MASK_DIO3MAPPING
     tmp := (tmp | mode) & core#DIOMAPPING1_MASK
@@ -281,9 +291,11 @@ PUB DIO4(mode) | tmp
 '       DIO4_CADDETECTED (0) - Channel Activity Detected
 '       DIO4_PLLLOCK (64) - PLL Locked
 '       DIO4_PLLLOCK (128) - PLL Locked
+    tmp := $00
     readReg(core#DIOMAPPING2, 1, @tmp)
     case mode
         DIO4_CADDETECTED, DIO4_PLLLOCK:
+            mode <<= core#FLD_DIO4MAPPING
         OTHER:
             return (tmp >> core#FLD_DIO4MAPPING) & %11
 
@@ -300,6 +312,7 @@ PUB DIO5(mode) | tmp
     readReg(core#DIOMAPPING2, 1, @tmp)
     case mode
         DIO5_MODEREADY, DIO5_CLKOUT:
+            mode <<= core#FLD_DIO5MAPPING
         OTHER:
             return (tmp >> core#FLD_DIO5MAPPING) & %11
 
