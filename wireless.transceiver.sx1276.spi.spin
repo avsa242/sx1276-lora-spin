@@ -672,7 +672,7 @@ PUB SpreadingFactor(chips_sym) | tmp
     readReg(core#MODEMCONFIG2, 1, @tmp)
     case chips_sym
         64, 128, 256, 512, 1024, 2048, 4096:
-            chips_sym := lookdown(chips_sym: 64, 128, 256, 512, 1024, 2048, 4096)
+            chips_sym := (lookdown(chips_sym: 64, 128, 256, 512, 1024, 2048, 4096) + 5) << core#FLD_SPREADINGFACTOR
         OTHER:
             result := (tmp >> core#FLD_SPREADINGFACTOR)-5
             return lookup(result: 64, 128, 256, 512, 1024, 2048, 4096)
