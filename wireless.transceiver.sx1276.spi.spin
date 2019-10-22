@@ -16,8 +16,8 @@ CON
     FXOSC                   = 32_000_000
     TWO_19                  = 1 << 19
     TWO_24                  = 1 << 24
-    FPSCALE                 = 1_000_000
-    FSTEP                   = 61035156  ' (FXOSC / TWO_19) * FPSCALE
+    FPSCALE                 = 10_000_000
+    FSTEP                   = 610351562  ' (FXOSC / TWO_19) * FPSCALE
 ' Long-range modes
     LRMODE_FSK_OOK          = 0
     LRMODE_LORA             = 1
