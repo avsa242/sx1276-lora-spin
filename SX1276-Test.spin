@@ -5,7 +5,7 @@
     Description: Test of the SX1276 driver
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 22, 2019
+    Updated Oct 23, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -289,13 +289,14 @@ PUB IRQFLAGSMASK(reps) | tmp, read
 PUB LNA(reps) | tmp, read
 
 '    _expanded := TRUE
+    lora.AGC (FALSE)
     _row++
     repeat reps
         repeat tmp from 1 to 6
-            ser.Bin(lora.LNA (lookup(tmp: 0, -6, -12, -24, -26, -48)), 8)
-            ser.NewLine
+            lora.LNA (lookup(tmp: 0, -6, -12, -24, -26, -48))
             read := lora.LNA (-2)
             Message (string("LNAGAIN"), lookup(tmp: 0, -6, -12, -24, -26, -48), read)
+    lora.AGC (TRUE)
 
 PUB LOWDATAOPT(reps) | tmp, read
 

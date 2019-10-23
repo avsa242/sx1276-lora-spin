@@ -6,7 +6,7 @@
         LoRa/FSK/OOK transceiver
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 22, 2019
+    Updated Oct 23, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -512,6 +512,7 @@ PUB LNA(gain) | tmp
 ' Set LNA gain, in dB
 '   Valid values: *0 (Maximum gain), -6 , -12, -24, -26, -48
 '   Any other value polls the chip and returns the current setting
+'   NOTE: This setting will have no effect if AGC is enabled
     tmp := $00
     readReg(core#LNA, 1, @tmp)
     case gain
