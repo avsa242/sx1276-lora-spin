@@ -8,7 +8,7 @@ This is a P8X32A/Propeller driver object for the Semtech SX1276 LoRa/FSK/OOK tra
 * SPI connection at up to 1MHz
 * Change transceiver frequency to anything within the SX1276's tunable range (NOTE: Only tested on the 915MHz band)
 * Change transceiver frequency by LoRa uplink channel number (NOTE: Currently limited to US/915MHz band)
-* Change common transceiver settings, such as: code rate, spreading factor, bandwidth, preamble length, payload length
+* Change common transceiver settings, such as: code rate, spreading factor, bandwidth, preamble length, payload length, LNA gain, transmit power
 * Change device operating mode, interrupt mask, implicit header mode
 * Change DIO pins functionality
 * Read live RSSI
@@ -33,7 +33,7 @@ This is a P8X32A/Propeller driver object for the Semtech SX1276 LoRa/FSK/OOK tra
 * Doesn't support FHSS
 
 ## TODO
-- [ ] Implement method to change TX power
+- [x] Implement method to change TX power
 - [ ] Write ANSI-compatible terminal version of demo
 - [ ] Implement support for other band plans
 - [ ] Make settings in the demo runtime changeable

@@ -38,7 +38,17 @@ CON
     FRFMSB                      = $06
     FRFMID                      = $07
     FRFLSB                      = $08
+
     PACONFIG                    = $09
+    PACONFIG_MASK               = $FF
+        FLD_PASELECT            = 7
+        FLD_MAXPOWER            = 4
+        FLD_OUTPUTPOWER         = 0
+        BITS_MAXPOWER           = %111
+        BITS_OUTPUTPOWER        = %1111
+        MASK_PASELECT           = PACONFIG_MASK ^ (1 << FLD_PASELECT)
+        MASK_MAXPOWER           = PACONFIG_MASK ^ (BITS_MAXPOWER << FLD_MAXPOWER)
+        MASK_OUTPUTPOWER        = PACONFIG_MASK ^ (BITS_OUTPUTPOWER << FLD_OUTPUTPOWER)
 
     PARAMP                      = $0A
     PARAMP_MASK                 = $0F
@@ -85,7 +95,14 @@ CON
 
     VERSION                     = $42
     TCXO                        = $4B
+
     PADAC                       = $4D
+    PADAC_MASK                  = $07
+        FLD_PADAC_RSVD          = 3
+        BITS_PADAC_RSVD         = %11111
+        FLD_PADAC               = 0
+        BITS_PADAC              = %111
+
     FORMERTEMP                  = $5B
     AGCREF                      = $61
     AGCTHRESH1                  = $62

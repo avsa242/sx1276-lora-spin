@@ -62,6 +62,10 @@ CON
     CLKOUT_RC               = 6
     CLKOUT_OFF              = 7
 
+' Power Amplifier output pin selection
+    PAOUT_RFO               = 0
+    PAOUT_PABOOST           = 1 << core#FLD_PASELECT
+
 VAR
 
     byte _CS, _MOSI, _MISO, _SCK
@@ -830,6 +834,46 @@ PUB TXMode(mode) | tmp
     tmp &= core#MASK_TXCONTINUOUSMODE
     tmp := (tmp | mode) & core#MODEMCONFIG2_MASK
     writeReg(core#MODEMCONFIG2, 1, @tmp)
+
+PUB TXPower(dBm, outpin) | tmp
+' Set transmit power, in dBm
+'   Valid values:
+'       outpin:
+'           PAOUT_RFO (0): Signal routed to RFO pin, max power is +14dBm
+'               dBm: -1..14
+'           PAOUT_PABOOST (128): Signal routed to PA_BOOST pin, max power is +20dBm
+'               dBm: 5..23
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#PACONFIG, 1, @tmp)
+    case outpin
+        PAOUT_RFO:
+            case dBm
+                -1..14:
+                    dBm := (7 << core#FLD_MAXPOWER) | (dBm + 1)
+                OTHER:
+                    return (tmp & core#BITS_OUTPUTPOWER) - 1
+
+            writeReg(core#PACONFIG, 1, @dBm)
+
+        PAOUT_PABOOST:
+            case dBm
+                5..20:
+                    tmp.byte[1]{pa_dac} := ($10 << core#FLD_PADAC_RSVD) | %100
+
+                21..23:
+                    tmp.byte[1]{pa_dac} := ($10 << core#FLD_PADAC_RSVD) | %111
+                    dBm -= 3
+
+                OTHER:
+                    return (tmp & core#BITS_OUTPUTPOWER) - 1    'XXX fix
+
+            tmp := (1 << core#FLD_PASELECT) | (dBm - 5)
+            writeReg(core#PADAC, 1, @tmp.byte[1]{pa_dac})
+            writeReg(core#PACONFIG, 1, @tmp)
+
+        OTHER:
+            return (tmp & core#BITS_OUTPUTPOWER) - 1
 
 PUB ValidHeadersReceived
 ' Returns number of valid headers received since last transition into receive mode

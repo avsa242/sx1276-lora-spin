@@ -331,10 +331,9 @@ PUB Transmit | count, tmp
     lora.DIO0 (lora#DIO0_TXDONE)
     lora.IntMask (%1111_0111)       ' Disable all interrupts except TXDONE
     lora.FIFOTXBasePtr ($00)        ' Set the TX FIFO base address to 0
-'    tmp := (%1_001 << 4) | 1        ' PA gain - enable PA_BOOST - RFM95W isn't connected to RFO
-    tmp := (%0_001 << 4) | 1        ' PA gain - disable PA_BOOST - test anyway
-    lora.writeReg ($09, 1, @tmp)    ' |
-'    lora.TXMode (lora#TXMODE_NORMAL)
+    lora.TXPower (5, lora#PAOUT_PABOOST)
+'       -1..14 with PAOUT_RFO
+'       5..20, 21..23 with PAOUT_PABOOST
 
     count := 0
     ser.Position (MSG_X, MSG_Y)
