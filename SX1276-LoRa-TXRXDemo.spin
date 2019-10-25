@@ -5,7 +5,7 @@
     Description: Demo of the SX1276 driver
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 22, 2019
+    Updated Oct 25, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -95,8 +95,7 @@ PUB Main | tmp
     lora.SpreadingFactor (128)
     lora.PreambleLength (8)
     lora.CodeRate ($04_05)
-    lora.ImplicitHeaderMode (TRUE)
-    lora.RXPayloadCRC (TRUE)
+    lora.ImplicitHeaderMode (FALSE)
     lora.PayloadLength (8)
     lora.PayloadMaxLength (8)
     lora.SyncWord ($12)
@@ -182,11 +181,12 @@ PUB DisplayModemFlags | mdm_stat, i
         else
             ser.Str (string("        "))
 
-PUB DisplayRXStats | last_pkt_rssi, last_pkt_snr, last_pkt_crc, last_pkt_bytes, cnt_valid_hdr, cnt_valid_pkt
+PUB DisplayRXStats | last_pkt_rssi, last_pkt_snr, last_pkt_crc, last_pkt_bytes, last_coderate, cnt_valid_hdr, cnt_valid_pkt
 
     last_pkt_rssi := lora.PacketRSSI
     last_pkt_snr := lora.PacketSNR
     last_pkt_crc := lora.LastHeaderCRC
+    last_coderate := lora.LastHeaderCodingRate
     cnt_valid_hdr := lora.ValidHeadersReceived
     cnt_valid_pkt := lora.ValidPacketsReceived
     last_pkt_bytes := lora.LastPacketBytes
@@ -197,6 +197,9 @@ PUB DisplayRXStats | last_pkt_rssi, last_pkt_snr, last_pkt_crc, last_pkt_bytes, 
 
     ser.Str (string("  SNR: "))
     ser.Str (int.DecPadded (last_pkt_snr, 4))
+
+    ser.Str (string("  Code Rate: "))
+    ser.Str (int.Hex (last_coderate, 4))
 
     ser.Str (string("  CRC Enabled: "))
     ser.Str (int.DecPadded (last_pkt_crc, 4))
@@ -332,6 +335,7 @@ PUB Transmit | count, tmp
     lora.IntMask (%1111_0111)       ' Disable all interrupts except TXDONE
     lora.FIFOTXBasePtr ($00)        ' Set the TX FIFO base address to 0
     lora.TXPower (5, lora#PAOUT_PABOOST)
+    lora.CodeRate ($0405)
 '       -1..14 with PAOUT_RFO
 '       5..20, 21..23 with PAOUT_PABOOST
 

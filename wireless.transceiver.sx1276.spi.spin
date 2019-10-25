@@ -6,7 +6,7 @@
         LoRa/FSK/OOK transceiver
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 23, 2019
+    Updated Oct 25, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -499,6 +499,7 @@ PUB LastHeaderCodingRate
 ' Returns coding rate of last header received
     readReg(core#MODEMSTAT, 1, @result)
     result >>= 5
+    result := lookup(result: $0405, $0406, $0407, $0408)
 
 PUB LastHeaderCRC
 ' Indicates if last header received with CRC on
