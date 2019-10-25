@@ -29,7 +29,9 @@ CON
     SET_DEFAULTS    = 4
     DISP_SETTINGS   = 5
     SET_FREQ        = 6
-    DO_MONITOR      = 7
+    CYCLE_BW        = 7
+    CYCLE_SPREAD    = 8
+    CHANGE_SYNCW    = 9
     WAITING         = 100
 
     TERM_START_X    = 0
@@ -91,7 +93,7 @@ PUB Main | tmp
     lora.DeviceMode (lora#DEVMODE_SLEEP)
     lora.LongRangeMode (lora#LRMODE_LORA)
     lora.DeviceMode (lora#DEVMODE_STDBY)
-    lora.RXBandwidth (125_000)
+    lora.RXBandwidth (125000)
     lora.SpreadingFactor (128)
     lora.PreambleLength (8)
     lora.CodeRate ($04_05)
@@ -99,7 +101,7 @@ PUB Main | tmp
     lora.PayloadLength (8)
     lora.PayloadMaxLength (8)
     lora.SyncWord ($12)
-    lora.RXTimeout (50)
+    lora.RXTimeout (100)
     ser.Clear
 
     ser.Position (0, TERM_START_Y+2)    'Rule
@@ -108,15 +110,81 @@ PUB Main | tmp
     repeat
         case _curr_state
             DISP_HELP:          Help
-            DO_MONITOR:         Monitor
             DO_RX:              Receive
             DO_TX:              Transmit
             SET_DEFAULTS:       SetDefaults
             DISP_SETTINGS:      DisplaySettings
             SET_FREQ:           SetFrequency
+            CYCLE_BW:           CycleBandwidth
+            CYCLE_SPREAD:       CycleSpreadFactor
+            CHANGE_SYNCW:       ChangeSyncWord
             WAITING:            waitkey
             OTHER:
                 _curr_state := DISP_HELP
+
+PUB ChangeSyncWord | tmp
+
+    ser.Position (SYNCW_X+11, SYNCW_Y)
+    ser.Flush
+    tmp := ser.HexIn
+    if tmp => $00 and tmp =< $FF
+        lora.SyncWord (tmp)
+    _curr_state := _prev_state
+    return
+
+PUB CycleBandwidth | tmp
+
+    tmp := lora.RXBandwidth (QUERY)
+    case tmp
+        7800:
+            lora.RXBandwidth (10_400)
+        10_400:
+            lora.RXBandwidth (15_600)
+        15_600:
+            lora.RXBandwidth (20_800)
+        20_800:
+            lora.RXBandwidth (31_250)
+        31_250:
+            lora.RXBandwidth (41_700)
+        41_700:
+            lora.RXBandwidth (62_500)
+        62_500:
+            lora.RXBandwidth (125_000)
+        125_000:
+            lora.RXBandwidth (250_000)
+        250_000:
+            lora.RXBandwidth (500_000)
+        500_000:
+            lora.RXBandwidth (7_800)
+        OTHER:
+            lora.RXBandwidth (125_000)
+
+    _curr_state := _prev_state
+    return
+
+PUB CycleSpreadFactor | tmp
+
+    tmp := lora.SpreadingFactor (QUERY)
+    case tmp
+        64:
+            lora.SpreadingFactor (128)
+        128:
+            lora.SpreadingFactor (256)
+        256:
+            lora.SpreadingFactor (512)
+        512:
+            lora.SpreadingFactor (1024)
+        1024:
+            lora.SpreadingFactor (2048)
+        2048:
+            lora.SpreadingFactor (4096)
+        4096:
+            lora.SpreadingFactor (64)
+        OTHER:
+            lora.SpreadingFactor (128)
+
+    _curr_state := _prev_state
+    return
 
 PUB DisplayFIFO | i, col
 
@@ -242,35 +310,11 @@ PUB DisplaySettings | i, mdm_stat
 
     ser.Position (BANDW_X, BANDW_Y)
     ser.Str (string("Bandwidth: "))
-    ser.Dec (lora.RXBandwidth (QUERY))
+    ser.Str (int.DecPadded (lora.RXBandwidth (QUERY), 6))
 
     ser.Position (SPREAD_X, SPREAD_Y)
     ser.Str (string("SF: "))
-    ser.Dec (lora.SpreadingFactor (-2))
-
-'    repeat until _curr_state <> DISP_SETTINGS
-
-PUB Monitor | curr_chan
-' XXX non-functional
-    curr_chan := 0
-    ser.Position (MSG_X, MSG_Y)
-    ser.Str (string("Monitor mode"))
-    lora.IntMask (%1111_1010)
-    lora.DeviceMode (lora#DEVMODE_CAD)
-    repeat until _curr_state <> DO_MONITOR
-        ser.Position (CHAN_X, CHAN_Y)
-        ser.Str (string("Channel "))
-        ser.Str (int.DecPadded (curr_chan, 2))
-        lora.Channel (curr_chan)
-        repeat until lora.Interrupt (0) & %0000_0100    'Wait until CAD done
-        lora.Interrupt (%0000_0100)                     'Clear the int
-        if lora.Interrupt (0) & %0000_0001
-            ser.Position (CHAN_X + (curr_chan*3), CHAN_Y+1)
-            ser.Dec (curr_chan)
-            lora.Interrupt (%0000_0001)
-        curr_chan++
-        if curr_chan > 63
-            curr_chan := 0
+    ser.Str (int.DecPadded (lora.SpreadingFactor (-2), 4))
 
 PUB Receive | curr_rssi, min_rssi, max_rssi, len, tmp
 
@@ -335,7 +379,6 @@ PUB Transmit | count, tmp
     lora.IntMask (%1111_0111)       ' Disable all interrupts except TXDONE
     lora.FIFOTXBasePtr ($00)        ' Set the TX FIFO base address to 0
     lora.TXPower (5, lora#PAOUT_PABOOST)
-    lora.CodeRate ($0405)
 '       -1..14 with PAOUT_RFO
 '       5..20, 21..23 with PAOUT_PABOOST
 
@@ -366,12 +409,13 @@ PUB Help
 
     ser.Position (HELP_X, HELP_Y)
     ser.Str (string("Help:", ser#NL))
+    ser.Str (string("b  - Change bandwidth", ser#NL))
     ser.Str (string("d  - Set LoRa radio defaults", ser#NL))
     ser.Str (string("h  - This help screen", ser#NL))
-    ser.Str (string("m  - Monitor channel activity", ser#NL))
     ser.Str (string("r  - Set role to receiver", ser#NL))
-    ser.Str (string("s  - Display settings", ser#NL))
+    ser.Str (string("s  - Change spreading factor", ser#NL))
     ser.Str (string("t  - Set role to transmitter", ser#NL))
+    ser.Str (string("y  - Change syncword", ser#NL))
 
     repeat until _curr_state <> DISP_HELP
 
@@ -380,6 +424,10 @@ PRI keyDaemon | key_cmd
     repeat
         repeat until key_cmd := ser.CharIn
         case key_cmd
+            "b", "B":
+                _prev_state := _curr_state
+                _curr_state := CYCLE_BW
+
             "d", "D":
                 _prev_state := _curr_state
                 _curr_state := SET_DEFAULTS
@@ -388,21 +436,23 @@ PRI keyDaemon | key_cmd
                 _prev_state := _curr_state
                 _curr_state := DISP_HELP
 
-            "m", "M":
-                _prev_state := _curr_state
-                _curr_state := DO_MONITOR
-
             "r", "R":
                 _prev_state := _curr_state
                 _curr_state := DO_RX
 
             "s", "S":
                 _prev_state := _curr_state
-                _curr_state := DISP_SETTINGS
+                _curr_state := CYCLE_SPREAD
+                repeat until _curr_state <> CYCLE_SPREAD
 
             "t", "T":
                 _prev_state := _curr_state
                 _curr_state := DO_TX
+
+            "y", "Y":
+                _prev_state := _curr_state
+                _curr_state := CHANGE_SYNCW
+                repeat until _curr_state <> CHANGE_SYNCW
 
             OTHER:
                 if _curr_state == WAITING
