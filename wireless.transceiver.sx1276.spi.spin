@@ -6,7 +6,7 @@
         LoRa/FSK/OOK transceiver
     Copyright (c) 2019
     Started Oct 6, 2019
-    Updated Oct 25, 2019
+    Updated Oct 26, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
