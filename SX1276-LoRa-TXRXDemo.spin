@@ -32,6 +32,9 @@ CON
     CYCLE_BW        = 7
     CYCLE_SPREAD    = 8
     CHANGE_SYNCW    = 9
+    DEC_TXPWR       = 10
+    INC_TXPWR       = 11
+    CYCLE_RFOUT     = 12
     WAITING         = 100
 
     TERM_START_X    = 0
@@ -55,6 +58,10 @@ CON
     BANDW_Y         = DEVMODE_Y+1
     SPREAD_X        = BANDW_X+18
     SPREAD_Y        = BANDW_Y
+    TXPOWER_X       = SPREAD_X+10
+    TXPOWER_Y       = BANDW_Y
+    RFOUTPIN_X      = TXPOWER_X+17
+    RFOUTPIN_Y      = TXPOWER_Y
     IRQFLAGS_X      = 0
     IRQFLAGS_Y      = DEVMODE_Y+3
     MDMSTAT_X       = 0
@@ -84,15 +91,23 @@ VAR
     byte _ser_cog
     byte _keydaemon_cog, _prev_state, _curr_state
     byte _irq_flags, _irq_flags_mask, _last_pkt_bytes
+    byte _rf_outpin
 
 PUB Main | tmp
 
     Setup
-    lora.Channel (0)
-    lora.LowFreqMode (FALSE)
     lora.DeviceMode (lora#DEVMODE_SLEEP)
     lora.LongRangeMode (lora#LRMODE_LORA)
     lora.DeviceMode (lora#DEVMODE_STDBY)
+
+    _rf_outpin := lora#PAOUT_RFO        '       -1..14 with PAOUT_RFO
+    lora.TXPower (-1, _rf_outpin)
+
+'    _rf_outpin := lora#PAOUT_PABOOST   '       5..20, 21..23 with PAOUT_PABOOST
+'    lora.TXPower (5, _rf_outpin)
+
+    lora.Channel (0)
+    lora.LowFreqMode (FALSE)
     lora.RXBandwidth (125000)
     lora.SpreadingFactor (128)
     lora.PreambleLength (8)
@@ -118,6 +133,9 @@ PUB Main | tmp
             CYCLE_BW:           CycleBandwidth
             CYCLE_SPREAD:       CycleSpreadFactor
             CHANGE_SYNCW:       ChangeSyncWord
+            DEC_TXPWR:          DecreaseTXPwr
+            INC_TXPWR:          IncreaseTXPwr
+            CYCLE_RFOUT:        CycleRFOut
             WAITING:            waitkey
             OTHER:
                 _curr_state := DISP_HELP
@@ -162,6 +180,19 @@ PUB CycleBandwidth | tmp
     _curr_state := _prev_state
     return
 
+PUB CycleRFOut | tmp
+
+    case _rf_outpin
+        lora#PAOUT_RFO:
+            _rf_outpin := lora#PAOUT_PABOOST
+        lora#PAOUT_PABOOST:
+            _rf_outpin := lora#PAOUT_RFO
+        OTHER:
+            _rf_outpin := lora#PAOUT_RFO
+    lora.TXPower (5, _rf_outpin)
+    _curr_state := _prev_state
+    return
+
 PUB CycleSpreadFactor | tmp
 
     tmp := lora.SpreadingFactor (QUERY)
@@ -183,6 +214,48 @@ PUB CycleSpreadFactor | tmp
         OTHER:
             lora.SpreadingFactor (128)
 
+    _curr_state := _prev_state
+    return
+
+PUB DecreaseTXPwr | tmp
+
+    tmp := $00
+    tmp := lora.TXPower (QUERY, _rf_outpin)
+    case _rf_outpin
+        lora#PAOUT_RFO:
+            if tmp > -1
+                tmp--
+                lora.TXPower (tmp, _rf_outpin)
+            else
+                lora.TXPower (14, _rf_outpin)
+
+        lora#PAOUT_PABOOST:
+            if tmp > 5
+                tmp--
+                lora.TXPower (tmp, _rf_outpin)
+            else
+                lora.TXPower (23, _rf_outpin)
+    _curr_state := _prev_state
+    return
+
+PUB IncreaseTXPwr | tmp
+
+    tmp := $00
+    tmp := lora.TXPower (QUERY, _rf_outpin)
+    case _rf_outpin
+        lora#PAOUT_RFO:
+            if tmp < 14
+                tmp++
+                lora.TXPower (tmp, _rf_outpin)
+            else
+                lora.TXPower (-1, _rf_outpin)
+
+        lora#PAOUT_PABOOST:
+            if tmp < 23
+                tmp++
+                lora.TXPower (tmp, _rf_outpin)
+            else
+                lora.TXPower (5, _rf_outpin)
     _curr_state := _prev_state
     return
 
@@ -314,7 +387,20 @@ PUB DisplaySettings | i, mdm_stat
 
     ser.Position (SPREAD_X, SPREAD_Y)
     ser.Str (string("SF: "))
-    ser.Str (int.DecPadded (lora.SpreadingFactor (-2), 4))
+    ser.Str (int.DecPadded (lora.SpreadingFactor (QUERY), 4))
+
+    if _curr_state == DO_TX
+        ser.Position (TXPOWER_X, TXPOWER_Y)
+        ser.Str (string("TXPower: "))
+        ser.Str (int.DecPadded (lora.TXPower (QUERY, _rf_outpin), 3))
+        ser.Str (string("dBm"))
+        ser.Position (RFOUTPIN_X, RFOUTPIN_Y)
+        ser.Str (string("RFOutpin: "))
+        case _rf_outpin
+            lora#PAOUT_RFO:
+                ser.Str (string("RFO    "))
+            lora#PAOUT_PABOOST:
+                ser.Str (string("PABOOST"))
 
 PUB Receive | curr_rssi, min_rssi, max_rssi, len, tmp
 
@@ -378,9 +464,6 @@ PUB Transmit | count, tmp
     lora.DIO0 (lora#DIO0_TXDONE)
     lora.IntMask (%1111_0111)       ' Disable all interrupts except TXDONE
     lora.FIFOTXBasePtr ($00)        ' Set the TX FIFO base address to 0
-    lora.TXPower (5, lora#PAOUT_PABOOST)
-'       -1..14 with PAOUT_RFO
-'       5..20, 21..23 with PAOUT_PABOOST
 
     count := 0
     ser.Position (MSG_X, MSG_Y)
@@ -412,6 +495,8 @@ PUB Help
     ser.Str (string("b  - Change bandwidth", ser#NL))
     ser.Str (string("d  - Set LoRa radio defaults", ser#NL))
     ser.Str (string("h  - This help screen", ser#NL))
+    ser.Str (string("p  - Decrease TX power", ser#NL))
+    ser.Str (string("P  - Increase TX power", ser#NL))
     ser.Str (string("r  - Set role to receiver", ser#NL))
     ser.Str (string("s  - Change spreading factor", ser#NL))
     ser.Str (string("t  - Set role to transmitter", ser#NL))
@@ -427,18 +512,37 @@ PRI keyDaemon | key_cmd
             "b", "B":
                 _prev_state := _curr_state
                 _curr_state := CYCLE_BW
+                repeat until _curr_state <> CYCLE_BW
 
             "d", "D":
                 _prev_state := _curr_state
                 _curr_state := SET_DEFAULTS
+                repeat until _curr_state <> SET_DEFAULTS
 
             "h", "H":
                 _prev_state := _curr_state
                 _curr_state := DISP_HELP
+                repeat until _curr_state <> DISP_HELP
+
+            "o", "O":
+                _prev_state := _curr_state
+                _curr_state := CYCLE_RFOUT
+                repeat until _curr_state <> CYCLE_RFOUT
+
+            "p":
+                _prev_state := _curr_state
+                _curr_state := DEC_TXPWR
+                repeat until _curr_state <> DEC_TXPWR
+
+            "P":
+                _prev_state := _curr_state
+                _curr_state := INC_TXPWR
+                repeat until _curr_state <> INC_TXPWR
 
             "r", "R":
                 _prev_state := _curr_state
                 _curr_state := DO_RX
+                repeat until _curr_state <> DO_RX
 
             "s", "S":
                 _prev_state := _curr_state
