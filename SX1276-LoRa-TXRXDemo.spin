@@ -96,9 +96,7 @@ VAR
 PUB Main | tmp
 
     Setup
-    lora.DeviceMode (lora#DEVMODE_SLEEP)
     lora.LongRangeMode (lora#LRMODE_LORA)
-    lora.DeviceMode (lora#DEVMODE_STDBY)
 
     _rf_outpin := lora#PAOUT_RFO        '       -1..14 with PAOUT_RFO
     lora.TXPower (-1, _rf_outpin)

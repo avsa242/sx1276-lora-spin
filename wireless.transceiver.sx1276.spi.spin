@@ -537,7 +537,7 @@ PUB LongRangeMode(mode) | tmp
 '      *LRMODE_FSK_OOK (0): FSK, OOK packet radio mode
 '       LRMODE_LORA (1): LoRa radio mode
 '   Any other value polls the chip and returns the current setting
-'   NOTE: You must set the DeviceMode to DEVMODE_SLEEP before changing this setting
+'   NOTE: The operating mode will be set to STANDBY (idle) after switching long-range modes
     tmp := $00
     readReg(core#OPMODE, 1, @tmp)
     case mode
@@ -546,9 +546,13 @@ PUB LongRangeMode(mode) | tmp
         OTHER:
             return (tmp >> core#FLD_LONGRANGEMODE) & %1
 
+    tmp &= core#MASK_MODE                   ' Set operating mode to SLEEP
     tmp &= core#MASK_LONGRANGEMODE
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeReg(core#OPMODE, 1, @tmp)
+
+    time.MSleep(10)
+    DeviceMode(DEVMODE_STDBY)
 
 PUB LowDataRateOptimize(enabled) | tmp
 ' Optimize for low data rates
