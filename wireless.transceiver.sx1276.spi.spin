@@ -901,7 +901,7 @@ PUB Version
     result := $00
     readReg(core#VERSION, 1, @result)
 
-PUB readReg(reg, nr_bytes, buf_addr) | i
+PRI readReg(reg, nr_bytes, buf_addr) | i
 ' Read nr_bytes from register 'reg' to address 'buf_addr'
 
     case reg
@@ -916,7 +916,7 @@ PUB readReg(reg, nr_bytes, buf_addr) | i
         byte[buf_addr][i] := spi.SHIFTIN(_MISO, _SCK, core#MISO_BITORDER, 8)
     outa[_CS] := 1
 
-PUB writeReg(reg, nr_bytes, buf_addr) | i
+PRI writeReg(reg, nr_bytes, buf_addr) | i
 ' Write nr_bytes to register 'reg' stored at buf_addr
     case reg
         $00, $01, $06..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $39, $40, $44, $4B, $4D, $5D, $61..$64, $70:
