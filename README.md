@@ -1,11 +1,11 @@
 # sx1276-spin
 -------------
 
-This is a P8X32A/Propeller driver object for the Semtech SX1276 LoRa/FSK/OOK transceiver.
+This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Semtech SX1276 LoRa/FSK/OOK transceiver.
 
 ## Salient Features
 
-* SPI connection at up to 1MHz
+* SPI connection at up to 1MHz (Propeller 2/spin2 TBD)
 * Tested with HopeRF RFM95W (900MHz) module
 * Change transceiver frequency to anything within the SX1276's tunable range (NOTE: Only tested on the 915MHz band)
 * Change transceiver frequency by LoRa uplink channel number (NOTE: Currently limited to US/915MHz band)
@@ -22,7 +22,7 @@ This is a P8X32A/Propeller driver object for the Semtech SX1276 LoRa/FSK/OOK tra
 ## Compiler compatibility
 
 - [x] OpenSpin (tested with 1.00.81)
-- [ ] ~~FastSpin~~ (FTBFS)
+- [x] FastSpin (when generating P2 only; tested with 4.0.3-beta, rev A silicon)
 
 ## Limitations
 
@@ -33,7 +33,7 @@ This is a P8X32A/Propeller driver object for the Semtech SX1276 LoRa/FSK/OOK tra
 
 ## TODO
 - [x] Implement method to change TX power
-- [ ] Write ANSI-compatible terminal version of demo
+- [ ] Write ANSI-compatible terminal version of demo (WIP)
 - [ ] Implement support for other band plans
 - [x] Make settings in the demo runtime changeable (WIP)
 - [ ] Implement FHSS
