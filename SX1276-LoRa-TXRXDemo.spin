@@ -98,11 +98,11 @@ PUB Main | tmp
     Setup
     lora.LongRangeMode (lora#LRMODE_LORA)
 
-    _rf_outpin := lora#PAOUT_RFO        '       -1..14 with PAOUT_RFO
-    lora.TXPower (-1, _rf_outpin)
+'    _rf_outpin := lora#PAOUT_RFO        '       -1..14 with PAOUT_RFO
+'    lora.TXPower (-1, _rf_outpin)
 
-'    _rf_outpin := lora#PAOUT_PABOOST   '       5..20, 21..23 with PAOUT_PABOOST
-'    lora.TXPower (5, _rf_outpin)
+    _rf_outpin := lora#PAOUT_PABOOST   '       5..20, 21..23 with PAOUT_PABOOST
+    lora.TXPower (5, _rf_outpin)
 
     lora.Channel (0)
     lora.LowFreqMode (FALSE)

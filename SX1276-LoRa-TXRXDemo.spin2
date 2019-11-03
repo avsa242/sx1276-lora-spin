@@ -12,26 +12,26 @@
 
 CON
 
-    XTAL        = cfg#XTAL
-    XDIV        = cfg#XDIV
-    XMUL        = cfg#XMUL
-    XDIVP       = cfg#XDIVP
-    XOSC        = cfg#XOSC
-    XSEL        = cfg#XSEL
-    XPPPP       = cfg#XPPPP
-    CLOCKFREQ   = cfg#CLOCKFREQ
-    SETFREQ     = cfg#SETFREQ
-    ENAFREQ     = cfg#ENAFREQ
+    XTAL            = cfg#XTAL
+    XDIV            = cfg#XDIV
+    XMUL            = cfg#XMUL
+    XDIVP           = cfg#XDIVP
+    XOSC            = cfg#XOSC
+    XSEL            = cfg#XSEL
+    XPPPP           = cfg#XPPPP
+    CLOCKFREQ       = cfg#CLOCKFREQ
+    SETFREQ         = cfg#SETFREQ
+    ENAFREQ         = cfg#ENAFREQ
 
-    LED         = cfg#LED1
-    SER_RX      = cfg#SER_RX
-    SER_TX      = cfg#SER_TX
-    SER_BAUD    = 2_000_000
+    LED             = cfg#LED1
+    SER_RX          = cfg#SER_RX
+    SER_TX          = cfg#SER_TX
+    SER_BAUD        = 2_000_000
 
-    CS_PIN      = 32
-    SCK_PIN     = 35
-    MOSI_PIN    = 33
-    MISO_PIN    = 34
+    CS_PIN          = 32
+    SCK_PIN         = 35
+    MOSI_PIN        = 33 
+    MISO_PIN        = 34
 
     DISP_HELP       = 1
     DO_RX           = 2
@@ -69,7 +69,7 @@ CON
     SPREAD_X        = BANDW_X+18
     SPREAD_Y        = BANDW_Y
     TXPOWER_X       = SPREAD_X+10
-    TXPOWER_Y       = BANDW_Y
+    TXPOWER_Y       = BANDW_Y+1
     RFOUTPIN_X      = TXPOWER_X+17
     RFOUTPIN_Y      = TXPOWER_Y
     IRQFLAGS_X      = 0
@@ -127,7 +127,7 @@ PUB Main | tmp
     lora.RXTimeout (100)
     ser.Clear
 
-    ser.Position (0, TERM_START_Y+2)    'Rule
+    ser.Position (0, TERM_START_Y+3)    'Rule   'xxx y-pos temp hack until ansi terminal fixed
     ser.Chars ("-", TERM_MAX_X)
 
     repeat
@@ -269,13 +269,13 @@ PUB IncreaseTXPwr | tmp
 PUB DisplayFIFO | i, col
 
     ser.Position (FIFO_X, FIFO_Y)
-    ser.Str (string("FIFO:[", ser#NL))
+    ser.printf("FIFO:[\n")
 
     col := FIFO_X
     i := 0
     repeat
         repeat col from FIFO_X to FIFO_WIDTH
-            ser.PositionX (col)
+            ser.PositionX (col+1)
             if _fifo.byte[i] => 32 AND _fifo.byte[i] =< 127
                 ser.Char (_fifo.byte[i])
             else
@@ -289,45 +289,45 @@ PUB DisplayFIFO | i, col
 
 PUB DisplayIRQFlags | i
 
-    ser.Position (IRQFLAGS_X, IRQFLAGS_Y)
+    ser.Position (IRQFLAGS_X, IRQFLAGS_Y+1)
 '    _irq_flags := %1111_0011    'TESTING
-    ser.Str (string("IRQFLAGS: "))
+    ser.printf("IRQFLAGS: ")
 '    ser.Bin (_irq_flags, 8)
 '    ser.Str (string("  IRQMASK: "))
 '    ser.Bin (_irq_flags_mask, 8)
     repeat i from 7 to 0
-        ser.Position ((IRQFLAGS_X + 9 + 1) + ((7-i) * 9), IRQFLAGS_Y)
+        ser.Position ((IRQFLAGS_X + 9 + 1) + ((7-i) * 9), IRQFLAGS_Y+1)
         ser.Char ("|")
         if _irq_flags & (1 << i)
             case i
-                0: ser.Str (string("CADDET  "))
-                1: ser.Str (string("FHSSCHG "))
-                2: ser.Str (string("CADDONE "))
-                3: ser.Str (string("TXDONE  "))
-                4: ser.Str (string("VALIDHDR"))
-                5: ser.Str (string("PAYLDCRC"))
-                6: ser.Str (string("RXDONE  "))
-                7: ser.Str (string("RXTMOUT "))
+                0: ser.printf("CADDET  ")
+                1: ser.printf("FHSSCHG ")
+                2: ser.printf("CADDONE ")
+                3: ser.printf("TXDONE  ")
+                4: ser.printf("VALIDHDR")
+                5: ser.printf("PAYLDCRC")
+                6: ser.printf("RXDONE  ")
+                7: ser.printf("RXTMOUT ")
         else
-            ser.Str (string("        "))
+            ser.printf("        ")
 
 PUB DisplayModemFlags | mdm_stat, i
 
-    ser.Position (MDMSTAT_X, MDMSTAT_Y)
+    ser.Position (MDMSTAT_X, MDMSTAT_Y+1)
     mdm_stat := lora.ModemStatus
-    ser.Str (string("MDMSTATUS: "))
+    ser.printf("MDMSTATUS: ")
     repeat i from 4 to 0
-        ser.Position ((MDMSTAT_X + 9 + 1) + ((7-i) * 9), MDMSTAT_Y)
+        ser.Position ((MDMSTAT_X + 9 + 1) + ((7-i) * 9), MDMSTAT_Y+1)
         ser.Char ("|")
         if mdm_stat & (1 << i)
             case i
-                0: ser.Str (string("SIGNDET "))
-                1: ser.Str (string("SIGSYNCH"))
-                2: ser.Str (string("RXONGOIN"))
-                3: ser.Str (string("HDRVALID"))
-                4: ser.Str (string("MDMCLEAR"))
+                0: ser.printf("SIGNDET ")
+                1: ser.printf("SIGSYNCH")
+                2: ser.printf("RXONGOIN")
+                3: ser.printf("HDRVALID")
+                4: ser.printf("MDMCLEAR")
         else
-            ser.Str (string("        "))
+            ser.printf("        ")
 
 PUB DisplayRXStats | last_pkt_rssi, last_pkt_snr, last_pkt_crc, last_pkt_bytes, last_coderate, cnt_valid_hdr, cnt_valid_pkt
 
@@ -350,19 +350,19 @@ PUB DisplaySettings | i, mdm_stat
 
     ser.Position (DEVMODE_X, DEVMODE_Y)
     case lora.DeviceMode (QUERY)
-        0: ser.Str (string("SLEEP       "))
-        1: ser.Str (string("STANDBY     "))
-        2: ser.Str (string("FSTX        "))
-        3: ser.Str (string("TX          "))
-        4: ser.Str (string("FSRX        "))
-        5: ser.Str (string("RXCONTINUOUS"))
-        6: ser.Str (string("RXSINGLE    "))
-        7: ser.Str (string("CAD         "))
+        0: ser.printf("SLEEP       ")
+        1: ser.printf("STANDBY     ")
+        2: ser.printf("FSTX        ")
+        3: ser.printf("TX          ")
+        4: ser.printf("FSRX        ")
+        5: ser.printf("RXCONTINUOUS")
+        6: ser.printf("RXSINGLE    ")
+        7: ser.printf("CAD         ")
 
     ser.Position (LORAMODE_X, LORAMODE_Y)
     case lora.LongRangeMode (QUERY)
-        0: ser.Str (string("FSK/OOK     "))
-        1: ser.Str (string("LoRa        "))
+        0: ser.printf("FSK/OOK     ")
+        1: ser.printf("LoRa        ")
 
     ser.Position (FREQ_X, FREQ_Y)
     ser.printf("Freq: %d", lora.CarrierFreq (QUERY))
@@ -370,27 +370,27 @@ PUB DisplaySettings | i, mdm_stat
     ser.Position (SYNCW_X, SYNCW_Y)
     ser.printf("Syncword: $%x", lora.SyncWord (QUERY))
 
-    ser.Position (BANDW_X, BANDW_Y)
+    ser.Position (BANDW_X, BANDW_Y+1)
     ser.printf("Bandwidth: %d", lora.RXBandwidth (QUERY))
 
-    ser.Position (SPREAD_X, SPREAD_Y)
+    ser.Position (SPREAD_X, SPREAD_Y+1) 'temp hack until ansi terminal fixed
     ser.printf("SF: %d", lora.SpreadingFactor (QUERY))
 
     if _curr_state == DO_TX
         ser.Position (TXPOWER_X, TXPOWER_Y)
         ser.printf("TXPower: %ddBm", lora.TXPower (QUERY, _rf_outpin))
         ser.Position (RFOUTPIN_X, RFOUTPIN_Y)
-        ser.Str (string("RFOutpin: "))
+        ser.printf("RFOutpin: ")
         case _rf_outpin
             lora#PAOUT_RFO:
-                ser.Str (string("RFO    "))
+                ser.printf("RFO    ")
             lora#PAOUT_PABOOST:
-                ser.Str (string("PABOOST"))
+                ser.printf("PABOOST")
 
 PUB Receive | curr_rssi, min_rssi, max_rssi, len, tmp
 
     ser.Position (MSG_X, MSG_Y)
-    ser.Str (string("Receive mode"))
+    ser.printf("Receive mode")
     lora.IntMask (%1011_1111)
     lora.LNA (0)
     lora.AGC (FALSE)
@@ -424,14 +424,16 @@ PUB Receive | curr_rssi, min_rssi, max_rssi, len, tmp
 PUB SetDefaults
 
     ser.Position (MSG_X, MSG_Y)
-    ser.Str (string("Set defaults"))
+    ser.printf("Set defaults")
     repeat until _curr_state <> SET_DEFAULTS
+    'not implemented yet
 
 PUB SetFrequency
 
     ser.Position (MSG_X, MSG_Y)
-    ser.Str (string("Set frequency"))
+    ser.printf("Set frequency")
     repeat until _curr_state <> SET_FREQ
+    'not implemented yet
 
 PUB Transmit | count, tmp
 
@@ -449,7 +451,7 @@ PUB Transmit | count, tmp
     ser.Position (MSG_X, MSG_Y)
     ser.printf("Transmit mode")
     repeat until _curr_state <> DO_TX
-        tmp := int.Dec(count)'int.Hex (count, 4)   'XXX
+        tmp := int.Dec(count)'int.Hex (count, 4)   'XXX hangs in the hex method
         longmove(@_fifo[1], tmp, 1)
         DisplaySettings
         DisplayModemFlags
@@ -472,7 +474,7 @@ PUB Help
     ser.Position (HELP_X, HELP_Y)
     ser.printf("Help:\n")
     ser.printf("b  - Change bandwidth\n")
-    ser.printf("d  - Set LoRa radio defaults\n")
+'    ser.printf("d  - Set LoRa radio defaults\n")
     ser.printf("h  - This help screen\n")
     ser.printf("p  - Decrease TX power\n")
     ser.printf("P  - Increase TX power\n")
@@ -557,7 +559,7 @@ PUB Setup
     time.msleep(500)
     ser.Clear
     ser.printf("Serial terminal started\n")
-    if lora.Startx (CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, 5_000_000)
+    if lora.Start (CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
         ser.printf("sx1276 driver started\n")
     else
         ser.printf("sx1276 driver failed to start - halting\n")

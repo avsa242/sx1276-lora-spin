@@ -72,9 +72,9 @@ VAR
 
 OBJ
 
-    spi : "com.spi.bitbang"                                             'PASM SPI Driver
-    core: "core.con.sx1276"                       'File containing your device's register set
-    time: "time"                                                'Basic timing functions
+    spi : "com.spi.bitbang"
+    core: "core.con.sx1276"
+    time: "time"
     u64 : "math.unsigned64"
 
 PUB Null
@@ -82,11 +82,11 @@ PUB Null
 
 PUB Start(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN) : okay
 
-    okay := Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, core#CLK_DELAY, core#CPOL)
+    okay := Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, 5_000_000, core#CPOL)
 
-PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL=0): okay
-    if SCK_DELAY => 1 and lookdown(SCK_CPOL: 0, 1)
-        if okay := spi.start (SCK_DELAY, SCK_CPOL)              'SPI Object Started?
+PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ, SCK_CPOL): okay
+    if SCK_HZ => 1 and lookdown(SCK_CPOL: 0, 1)
+        if okay := spi.start (SCK_HZ, SCK_CPOL)              'SPI Object Started?
             time.MSleep (10)
             _CS := CS_PIN
             _MOSI := MOSI_PIN
