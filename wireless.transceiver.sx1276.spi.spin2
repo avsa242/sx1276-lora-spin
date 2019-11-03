@@ -485,7 +485,7 @@ PUB Interrupt(clear_mask)
         %0000_0001..%1111_1111:
             writeReg(core#IRQFLAGS, 1, @clear_mask)
         OTHER:
-            return
+            return result
 
 PUB IntMask(mask) | tmp
 ' Set interrupt mask
