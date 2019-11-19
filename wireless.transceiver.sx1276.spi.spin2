@@ -95,7 +95,7 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ, SCK_CPOL): okay
 
             out(_CS, 1)
             dir(_CS, 1)
-            if lookdown(Version: $11, $12)
+            if lookdown(ChipID: $11, $12)
                 return okay
 
     return FALSE                                                'If we got here, something went wrong
@@ -153,6 +153,15 @@ PUB Channel(number) | tmp
             result := CarrierFreq(-2)
             result := (result - 902_300_000) / 200_000
             return
+
+PUB ChipID
+' Version code of the chip
+'   Returns:
+'       Bits 7..4: full revision number
+'       Bits 3..0: metal mask revision number
+'   Known values: $11, $12
+    result := $00
+    readReg(core#VERSION, 1, @result)
 
 PUB ClkOut(divisor) | tmp
 ' Set clkout frequency, as a divisor of FXOSC
@@ -926,15 +935,6 @@ PUB ValidPacketsReceived
 ' Returns number of valid packets received since last transition into receive mode
 '   NOTE: To reset counter, set device to DEVMODE_SLEEP
     readReg(core#RXPACKETCNTVALUEMSB, 2, @result)
-
-PUB Version
-' Version code of the chip
-'   Returns:
-'       Bits 7..4: full revision number
-'       Bits 3..0: metal mask revision number
-'   Known values: $11, $12
-    result := $00
-    readReg(core#VERSION, 1, @result)
 
 PRI readReg(reg, nr_bytes, buf_addr) | i
 ' Read nr_bytes from register 'reg' to address 'buf_addr'
