@@ -207,6 +207,23 @@ PUB CodeRate(rate) | tmp
     tmp := (tmp | rate) & core#MODEMCONFIG1_MASK
     writeReg(core#MODEMCONFIG1, 1, @tmp)
 
+PUB CRCCheckEnabled(enabled) | tmp
+' Enable CRC generation and check on payload
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value polls the chip and returns the current setting
+    tmp := $00
+    readReg(core#MODEMCONFIG2, 1, @tmp)
+    case ||enabled
+        0, 1:
+            enabled := ||enabled << core#FLD_RXPAYLOADCRCON
+        OTHER:
+            result := ((tmp >> core#FLD_RXPAYLOADCRCON) & %1) * TRUE
+            return
+
+    tmp &= core#MASK_RXPAYLOADCRCON
+    tmp := (tmp | enabled) & core#MODEMCONFIG2_MASK
+    writeReg(core#MODEMCONFIG2, 1, @tmp)
+
 PUB DataRateCorrection(ppm) | tmp
 ' Set data rate offset value used in conjunction with AFC, in ppm
 '   Valid values: 0..255
@@ -771,23 +788,6 @@ PUB RXData(nr_bytes, buff_addr)
 PUB RXOngoing
 ' Return receive on-going status
     result := ((ModemStatus >> 2) & %1) * TRUE
-
-PUB RXPayloadCRC(enabled) | tmp
-' Enable CRC generation and check on payload
-'   Valid values: TRUE (-1 or 1), FALSE (0)
-'   Any other value polls the chip and returns the current setting
-    tmp := $00
-    readReg(core#MODEMCONFIG2, 1, @tmp)
-    case ||enabled
-        0, 1:
-            enabled := ||enabled << core#FLD_RXPAYLOADCRCON
-        OTHER:
-            result := ((tmp >> core#FLD_RXPAYLOADCRCON) & %1) * TRUE
-            return
-
-    tmp &= core#MASK_RXPAYLOADCRCON
-    tmp := (tmp | enabled) & core#MODEMCONFIG2_MASK
-    writeReg(core#MODEMCONFIG2, 1, @tmp)
 
 PUB RXTimeout(symbols) | tmp, symbtimeout_msb, symbtimeout_lsb
 ' Set receive timeout, in symbols
