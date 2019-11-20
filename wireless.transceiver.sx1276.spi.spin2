@@ -789,6 +789,10 @@ PUB RXData(nr_bytes, buff_addr)
         OTHER:
             return FALSE
 
+PUB RXMode
+' Change chip state to RX (receive)
+    DeviceMode(DEVMODE_RXCONTINUOUS)
+
 PUB RXOngoing
 ' Return receive on-going status
     result := ((ModemStatus >> 2) & %1) * TRUE
