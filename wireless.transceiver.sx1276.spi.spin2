@@ -870,6 +870,10 @@ PUB TXData(nr_bytes, buff_addr) | tmp
         OTHER:
             return FALSE
 
+PUB TX
+' Change chip state to TX (transmit)
+    DeviceMode(DEVMODE_TX)
+
 PUB TXMode(mode) | tmp
 ' Set transmit mode
 '   Valid values:
