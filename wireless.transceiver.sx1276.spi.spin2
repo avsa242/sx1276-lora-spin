@@ -559,7 +559,7 @@ PUB LastPacketBytes
 
 PUB LNAGain(dB) | tmp
 ' Set LNA gain, in dB
-'   Valid values: *0 (Maximum gain), -6 , -12, -24, -26, -48
+'   Valid values: *0 (Maximum gain), -6, -12, -24, -26, -48
 '   Any other value polls the chip and returns the current setting
 '   NOTE: This setting will have no effect if AGC is enabled
     tmp := $00
@@ -702,19 +702,19 @@ PUB PacketSNR
         -result
     result := result / 4
 
-PUB PayloadLength(len) | tmp
+PUB PayloadLength(length) | tmp
 ' Set payload length, in bytes
 '   Valid values: 1..255
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readReg(core#LORA_PAYLOADLENGTH, 1, @tmp)
-    case len
+    case length
         1..255:
         OTHER:
             result := tmp
             return
 
-    writeReg(core#LORA_PAYLOADLENGTH, 1, @len)
+    writeReg(core#LORA_PAYLOADLENGTH, 1, @length)
 
 PUB PayloadMaxLength(len) | tmp
 ' Set payload maximum length, in bytes
