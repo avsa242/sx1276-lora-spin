@@ -557,7 +557,7 @@ PUB LastPacketBytes
 ' Returns number of payload bytes of last packet received
     readReg(core#RXNBBYTES, 1, @result)
 
-PUB LNA(gain) | tmp
+PUB LNAGain(dB) | tmp
 ' Set LNA gain, in dB
 '   Valid values: *0 (Maximum gain), -6 , -12, -24, -26, -48
 '   Any other value polls the chip and returns the current setting
