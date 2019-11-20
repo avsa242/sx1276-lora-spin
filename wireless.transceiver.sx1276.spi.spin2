@@ -261,7 +261,7 @@ PUB DeviceMode(mode) | tmp
     tmp := (tmp | mode) & core#OPMODE_MASK
     writeReg(core#OPMODE, 1, @tmp)
 
-PUB DIO0(mode) | tmp
+PUB GPIO0(mode) | tmp
 ' Assert DIO0 pin on set mode
 '   Valid values:
 '       DIO0_RXDONE (0) - Packet reception complete
@@ -280,7 +280,7 @@ PUB DIO0(mode) | tmp
     tmp := (tmp | mode) & core#DIOMAPPING1_MASK
     writeReg(core#DIOMAPPING1, 1, @tmp)
 
-PUB DIO1(mode) | tmp
+PUB GPIO1(mode) | tmp
 ' Assert DIO1 pin on set mode
 '   Valid values:
 '       DIO1_RXTIMEOUT (0) - Packet reception timed out
@@ -299,7 +299,7 @@ PUB DIO1(mode) | tmp
     tmp := (tmp | mode) & core#DIOMAPPING1_MASK
     writeReg(core#DIOMAPPING1, 1, @tmp)
 
-PUB DIO2(mode) | tmp
+PUB GPIO2(mode) | tmp
 ' Assert DIO2 pin on set mode
 '   Valid values:
 '       DIO2_FHSSCHANGECHANNEL (0) - FHSS Changed channel
@@ -319,7 +319,7 @@ PUB DIO2(mode) | tmp
     tmp := (tmp | mode) & core#DIOMAPPING1_MASK
     writeReg(core#DIOMAPPING1, 1, @tmp)
 
-PUB DIO3(mode) | tmp
+PUB GPIO3(mode) | tmp
 ' Assert DIO3 pin on set mode
 '   Valid values:
 '       DIO3_CADDONE (0) - Channel Activity Detection complete
@@ -338,7 +338,7 @@ PUB DIO3(mode) | tmp
     tmp := (tmp | mode) & core#DIOMAPPING1_MASK
     writeReg(core#DIOMAPPING1, 1, @tmp)
 
-PUB DIO4(mode) | tmp
+PUB GPIO4(mode) | tmp
 ' Assert DIO4 pin on set mode
 '   Valid values:
 '       DIO4_CADDETECTED (0) - Channel Activity Detected
@@ -357,7 +357,7 @@ PUB DIO4(mode) | tmp
     tmp := (tmp | mode) & core#DIOMAPPING2_MASK
     writeReg(core#DIOMAPPING2, 1, @tmp)
 
-PUB DIO5(mode) | tmp
+PUB GPIO5(mode) | tmp
 ' Assert DIO5 pin on set mode
 '   Valid values:
 '       DIO5_MODEREADY (0) - Requested operation mode is ready
