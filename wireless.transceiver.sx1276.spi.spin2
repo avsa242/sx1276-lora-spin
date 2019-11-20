@@ -741,18 +741,18 @@ PUB PLLLocked
     result &= %1
     result ^= %1
 
-PUB PreambleLength(len) | tmp
+PUB PreambleLen(bits) | tmp
 ' Set preamble length, in bits
 '   Valid values: 0..65535
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readReg(core#LORA_PREAMBLEMSB, 2, @tmp)
-    case len
+    case bits
         0..65535:
         OTHER:
             return tmp
 
-    writeReg(core#LORA_PREAMBLEMSB, 2, @len)
+    writeReg(core#LORA_PREAMBLEMSB, 2, @bits)
 
 PUB RSSI
 ' Current RSSI, in dBm
