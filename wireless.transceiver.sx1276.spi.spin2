@@ -825,6 +825,10 @@ PUB SignalSynchronized
 ' Return signal synchronized
     result := ((ModemStatus >> 1) & %1) * TRUE
 
+PUB Sleep
+' Power down chip
+    DeviceMode(DEVMODE_SLEEP)
+
 PUB SpreadingFactor(chips_sym) | tmp
 ' Set spreading factor rate, in chips per symbol
 '   Valid values: 64, *128, 256, 512, 1024, 2048, 4096
