@@ -472,6 +472,10 @@ PUB HopPeriod(symb_periods) | tmp
 
     writeReg(core#HOPPERIOD, 1, @symb_periods)
 
+PUB Idle
+' Change chip state to idle (standby)
+    DeviceMode(DEVMODE_STDBY)
+
 PUB ImplicitHeaderMode(enabled) | tmp
 ' Enable implicit header mode
 '   Valid values:
