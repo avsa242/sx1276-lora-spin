@@ -82,7 +82,7 @@ PUB Null
 
 PUB Start(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): okay
     if SCK_HZ => 1
-        if okay := spi.start (MOSI, MISO, SCK, SCK_HZ, core#CPOL)              'SPI Object Started?
+        if okay := spi.start (MOSI_PIN, MISO_PIN, SCK_PIN, SCK_HZ, core#CPOL)              'SPI Object Started?
             time.MSleep (10)
             _CS := CS_PIN
             _MOSI := MOSI_PIN
