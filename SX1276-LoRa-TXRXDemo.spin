@@ -3,9 +3,9 @@
     Filename: SX1276-LoRa-TXRXDemo.spin
     Author: Jesse Burt
     Description: Demo of the SX1276 driver
-    Copyright (c) 2019
+    Copyright (c) 2020
     Started Oct 6, 2019
-    Updated Oct 26, 2019
+    Updated Apr 29, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -356,7 +356,7 @@ PUB DisplayRXStats | last_pkt_rssi, last_pkt_snr, last_pkt_crc, last_pkt_bytes, 
 PUB DisplaySettings | i, mdm_stat
 
     ser.Position (DEVMODE_X, DEVMODE_Y)
-    case lora.DeviceMode (QUERY)
+    case lora.OpMode (QUERY)
         0: ser.Str (string("SLEEP       "))
         1: ser.Str (string("STANDBY     "))
         2: ser.Str (string("FSTX        "))
@@ -405,9 +405,9 @@ PUB Receive | curr_rssi, min_rssi, max_rssi, len, tmp
     ser.Position (MSG_X, MSG_Y)
     ser.Str (string("Receive mode"))
     lora.IntMask (%1011_1111)
-    lora.LNA (0)
-    lora.AGC (FALSE)
-    lora.DeviceMode (lora#DEVMODE_RXCONTINUOUS)
+    lora.LNAGain (0)
+    lora.AGCMode (FALSE)
+    lora.OpMode (lora#DEVMODE_RXCONTINUOUS)
     min_rssi := lora.RSSI
     max_rssi := min_rssi
     _irq_flags_mask := lora.IntMask (QUERY)
@@ -431,7 +431,7 @@ PUB Receive | curr_rssi, min_rssi, max_rssi, len, tmp
         if _irq_flags & %0100_0000
             len := lora.LastPacketBytes
             lora.FIFOAddrPointer (lora.FIFORXCurrentAddr)
-            lora.RXData (len, @_fifo)
+            lora.RXPayload (len, @_fifo)
             lora.Interrupt (%0100_0000)
 
             DisplayRXStats
@@ -458,8 +458,8 @@ PUB Transmit | count, tmp
     _fifo.byte[2] := "S"
     _fifo.byte[3] := "T"
 
-    lora.RXPayloadCRC (TRUE)
-    lora.DIO0 (lora#DIO0_TXDONE)
+    lora.CRCCheckEnabled (TRUE)
+    lora.GPIO0 (lora#DIO0_TXDONE)
     lora.IntMask (%1111_0111)       ' Disable all interrupts except TXDONE
     lora.FIFOTXBasePtr ($00)        ' Set the TX FIFO base address to 0
 
@@ -473,10 +473,10 @@ PUB Transmit | count, tmp
         DisplayModemFlags
         DisplayFIFO
         DisplayIRQFlags
-        lora.DeviceMode (lora#DEVMODE_STDBY)
+        lora.OpMode (lora#DEVMODE_STDBY)
         lora.FIFOAddrPointer ($00)  ' Seek to location $00 in the FIFO for subsequent FIFO op
-        lora.TXData (8, @_fifo)
-        lora.DeviceMode (lora#DEVMODE_TX)
+        lora.TXPayload (8, @_fifo)
+        lora.OpMode (lora#DEVMODE_TX)
         repeat until lora.Interrupt (0) & %0000_1000        ' Wait until TXDONE asserted
         lora.Interrupt (%0000_1000)                         ' Clear TXDONE
         ser.NewLine
