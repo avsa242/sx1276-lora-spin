@@ -72,7 +72,7 @@ VAR
 
 OBJ
 
-    spi : "com.spi.bitbang-fast"
+    spi : "com.spi"
     core: "core.con.sx1276"
     time: "time"
     u64 : "math.unsigned64"
@@ -81,20 +81,21 @@ OBJ
 PUB Null
 ''This is not a top-level object
 
-PUB Start(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_HZ=5_000_000): okay
+PUB Start(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ=5_000_000): okay
 
-    if SCK_HZ => 1
-        if okay := spi.start (MOSI_PIN, MISO_PIN, SCK_PIN, SCK_HZ, core#CPOL)              'SPI Object Started?
-            time.MSleep (10)
-            _CS := CS_PIN
-            _MOSI := MOSI_PIN
-            _MISO := MISO_PIN
-            _SCK := SCK_PIN
+    if lookdown(CS_PIN: 0..63) and lookdown(SCK_PIN: 0..63) and lookdown(MOSI_PIN: 0..63) and lookdown(MISO_PIN: 0..63)
+        if SCK_FREQ => 1 and SCK_FREQ =< core#SCK_MAX_FREQ
+            if okay := spi.start (SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)'(MOSI_PIN, MISO_PIN, SCK_PIN, SCK_HZ, core#CPOL)              'SPI Object Started?
+                time.MSleep (10)
+                _CS := CS_PIN
+                _MOSI := MOSI_PIN
+                _MISO := MISO_PIN
+                _SCK := SCK_PIN
 
-            io.High(_CS)
-            io.Output(_CS)
-            if lookdown(DeviceID: $11, $12)
-                return okay
+                io.High(_CS)
+                io.Output(_CS)
+                if lookdown(DeviceID: $11, $12)
+                    return okay
 
     return FALSE                                                'If we got here, something went wrong
 
@@ -931,10 +932,10 @@ PRI readReg(reg, nr_bytes, buff_addr) | i
             return FALSE
 
     io.Low(_CS)
-    spi.Write(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+    spi.Write(reg)
 
     repeat i from nr_bytes-1 to 0
-        byte[buff_addr][i] := spi.Read(_MISO, _SCK, core#MISO_BITORDER, 8)
+        byte[buff_addr][i] := spi.Read
     io.High(_CS)
 
 PRI writeReg(reg, nr_bytes, buff_addr) | i
@@ -945,11 +946,10 @@ PRI writeReg(reg, nr_bytes, buff_addr) | i
             return FALSE
 
     io.Low(_CS)
-    spi.Write(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg | core#WRITE)
+    spi.Write(reg | core#WRITE)
 
     repeat i from nr_bytes-1 to 0
-        spi.Write(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[buff_addr][i])
-
+        spi.Write(byte[buff_addr][i])
     io.High(_CS)
 
 DAT

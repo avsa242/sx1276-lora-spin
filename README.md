@@ -6,7 +6,6 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Semtech
 ## Salient Features
 
 * SPI connection at up to 1MHz (Propeller 2/spin2 TBD)
-* Tested with HopeRF RFM95W (900MHz) module
 * Change transceiver frequency to anything within the SX1276's tunable range (NOTE: Only tested on the 915MHz band)
 * Change transceiver frequency by LoRa uplink channel number (NOTE: Currently limited to US/915MHz band)
 * Change common transceiver settings, such as: code rate, spreading factor, bandwidth, preamble length, payload length, LNA gain, transmit power
@@ -17,12 +16,13 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Semtech
 
 ## Requirements
 
-* 1 extra core/cog for the PASM SPI driver
+* P1: 1 extra core/cog for the PASM SPI driver
+* P2: N/A
 
 ## Compiler compatibility
 
-- [x] OpenSpin (tested with 1.00.81)
-- [x] FastSpin (when generating P2 only; tested with 4.0.3-beta, rev A silicon)
+* P1/SPIN1: OpenSpin (tested with 1.00.81)
+* P2/SPIN2: FastSpin (tested with 4.1.4)
 
 ## Limitations
 

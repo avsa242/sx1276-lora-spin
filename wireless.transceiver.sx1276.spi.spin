@@ -83,22 +83,23 @@ PUB Null
 
 PUB Start(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN) : okay
 
-    okay := Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, core#CLK_DELAY, core#CPOL)
+    okay := Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, core#CLK_DELAY)
 
-PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY, SCK_CPOL): okay
+PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY): okay
 
-    if SCK_DELAY => 1 and lookdown(SCK_CPOL: 0, 1)
-        if okay := spi.start (SCK_DELAY, SCK_CPOL)              'SPI Object Started?
-            time.MSleep (10)
-            _CS := CS_PIN
-            _MOSI := MOSI_PIN
-            _MISO := MISO_PIN
-            _SCK := SCK_PIN
+    if lookdown(CS_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
+        if SCK_DELAY => 1 and lookdown(SCK_CPOL: 0, 1)
+            if okay := spi.start (SCK_DELAY, SCK_CPOL)              'SPI Object Started?
+                time.MSleep (10)
+                _CS := CS_PIN
+                _MOSI := MOSI_PIN
+                _MISO := MISO_PIN
+                _SCK := SCK_PIN
 
-            io.High(_CS)
-            io.Output(_CS)
-            if lookdown(DeviceID: $11, $12)
-                return okay
+                io.High(_CS)
+                io.Output(_CS)
+                if lookdown(DeviceID: $11, $12)
+                    return okay
 
     return FALSE                                                'If we got here, something went wrong
 

@@ -107,6 +107,7 @@ VAR
 PUB Main | tmp
 
     Setup
+    ser.HideCursor
     lora.LongRangeMode (lora#LRMODE_LORA)
 
 '    _rf_outpin := lora#PAOUT_RFO        '       -1..14 with PAOUT_RFO
@@ -126,7 +127,6 @@ PUB Main | tmp
     lora.PayloadMaxLength (8)
     lora.SyncWord ($12)
     lora.RXTimeout (100)
-    ser.Clear
 
     ser.Position (0, TERM_START_Y+3)    'Rule   'xxx y-pos temp hack until ansi terminal fixed
     ser.Chars ("-", TERM_MAX_X)
@@ -151,11 +151,13 @@ PUB Main | tmp
 
 PUB ChangeSyncWord | tmp
 
+    ser.ShowCursor
     ser.Position (SYNCW_X+11, SYNCW_Y)
     tmp := ser.HexIn
     if tmp => $00 and tmp =< $FF
         lora.SyncWord (tmp)
     _curr_state := _prev_state
+    ser.HideCursor
     return
 
 PUB CycleBandwidth | tmp
@@ -390,6 +392,7 @@ PUB DisplaySettings | i, mdm_stat
 
 PUB Receive | curr_rssi, min_rssi, max_rssi, len, tmp
 
+    ser.clear
     ser.Position (MSG_X, MSG_Y)
     ser.printf("Receive mode")
     lora.IntMask (%1011_1111)
@@ -408,7 +411,7 @@ PUB Receive | curr_rssi, min_rssi, max_rssi, len, tmp
         ser.Position (0, MDMSTAT_Y+2)
         min_rssi := curr_rssi <# min_rssi
         max_rssi := curr_rssi #> max_rssi
-        ser.printf("Live RSSI (curr/min/max): %d/%d/%d", curr_rssi, min_rssi, max_rssi)
+        ser.printf("Live RSSI (curr/min/max): %d / %d / %d ", curr_rssi, min_rssi, max_rssi)
 
         DisplaySettings
         if _irq_flags & %0100_0000
@@ -438,6 +441,7 @@ PUB SetFrequency
 
 PUB Transmit | count, tmp
 
+    ser.clear
     _fifo.byte[0] := "T"
     _fifo.byte[1] := "E"
     _fifo.byte[2] := "S"
@@ -484,7 +488,8 @@ PUB Help
     ser.printf("t  - Set role to transmitter\n")
     ser.printf("y  - Change syncword\n")
 
-    repeat until _curr_state <> DISP_HELP
+'    repeat until _curr_state <> DISP_HELP
+    _curr_state := WAITING
 
 PRI keyDaemon | key_cmd
 
