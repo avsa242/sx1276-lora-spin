@@ -6,7 +6,7 @@
         LoRa/FSK/OOK transceiver (P2 version)
     Copyright (c) 2020
     Started Nov 3, 2019
-    Updated Apr 29, 2020
+    Updated May 15, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -85,7 +85,7 @@ PUB Start(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ=5_000_000): okay
 
     if lookdown(CS_PIN: 0..63) and lookdown(SCK_PIN: 0..63) and lookdown(MOSI_PIN: 0..63) and lookdown(MISO_PIN: 0..63)
         if SCK_FREQ => 1 and SCK_FREQ =< core#SCK_MAX_FREQ
-            if okay := spi.start (SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)'(MOSI_PIN, MISO_PIN, SCK_PIN, SCK_HZ, core#CPOL)              'SPI Object Started?
+            if okay := spi.start (SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
                 time.MSleep (10)
                 _CS := CS_PIN
                 _MOSI := MOSI_PIN
@@ -109,9 +109,9 @@ PUB AGCMode(enabled=-2) | tmp
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readReg(core#MODEMCONFIG3, 1, @tmp)
-    case ||enabled
+    case abs(enabled)
         0, 1:
-            enabled := (||enabled & %1) << core#FLD_AGCAUTOON
+            enabled := (abs(enabled) & %1) << core#FLD_AGCAUTOON
         OTHER:
             return ((tmp >> core#FLD_AGCAUTOON) & %1) * TRUE
 
@@ -198,9 +198,9 @@ PUB CRCCheckEnabled(enabled=-2) | tmp
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readReg(core#MODEMCONFIG2, 1, @tmp)
-    case ||enabled
+    case abs(enabled)
         0, 1:
-            enabled := ||enabled << core#FLD_RXPAYLOADCRCON
+            enabled := abs(enabled) << core#FLD_RXPAYLOADCRCON
         OTHER:
             return ((tmp >> core#FLD_RXPAYLOADCRCON) & %1) * TRUE
 
@@ -444,9 +444,9 @@ PUB ImplicitHeaderMode(enabled=-2) | tmp
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readReg(core#MODEMCONFIG1, 1, @tmp)
-    case ||enabled
+    case abs(enabled)
         0, 1:
-            enabled := ||enabled & %1
+            enabled := abs(enabled) & %1
         OTHER:
             return (tmp & %1) * TRUE
 
@@ -566,9 +566,9 @@ PUB LowDataRateOptimize(enabled=-2) | tmp
 '   NOTE: This setting is mandated when the symbol length exceeds 16ms
     tmp := $00
     readReg(core#MODEMCONFIG3, 1, @tmp)
-    case ||enabled
+    case abs(enabled)
         0, 1:
-            enabled := ||enabled << core#FLD_LOWDATARATEOPTIMIZE
+            enabled := abs(enabled) << core#FLD_LOWDATARATEOPTIMIZE
         OTHER:
             return ((tmp >> core#FLD_LOWDATARATEOPTIMIZE) & %1) * TRUE
 
@@ -583,9 +583,9 @@ PUB LowFreqMode(enabled=-2) | tmp
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readReg(core#OPMODE, 1, @tmp)
-    case ||enabled
+    case abs(enabled)
         0, 1:
-            enabled := (||enabled << core#FLD_LOWFREQUENCYMODEON)
+            enabled := (abs(enabled) << core#FLD_LOWFREQUENCYMODEON)
         OTHER:
             return ((tmp >> core#FLD_LOWFREQUENCYMODEON) & %1) * TRUE
 
@@ -632,9 +632,9 @@ PUB OverCurrentProt(enabled=-2) | tmp
 '   Any other value polls the chip and returns the current setting
     tmp := $00
     readReg(core#OCP, 1, @tmp)
-    case ||enabled
+    case abs(enabled)
         0, 1:
-            enabled := ||enabled << core#FLD_OCPON
+            enabled := abs(enabled) << core#FLD_OCPON
         OTHER:
             return ((tmp >> core#FLD_OCPON) & %1) * TRUE
 
@@ -923,30 +923,30 @@ PUB ValidPacketsReceived
 '   NOTE: To reset counter, set device to DEVMODE_SLEEP
     readReg(core#RXPACKETCNTVALUEMSB, 2, @result)
 
-PRI readReg(reg, nr_bytes, buff_addr) | i
-' Read nr_bytes from register 'reg' to address 'buff_addr'
+PRI readReg(reg_nr, nr_bytes, buff_addr) | i
+' Read nr_bytes from reg_nrister 'reg_nr' to address 'buff_addr'
 
-    case reg
+    case reg_nr
         $00, $01, $06..$2A, $2C, $2F, $39, $40, $42, $44, $4B, $4D, $5B, $5D, $61..$64, $70:
         OTHER:
             return FALSE
 
     io.Low(_CS)
-    spi.Write(reg)
+    spi.Write(reg_nr)
 
     repeat i from nr_bytes-1 to 0
         byte[buff_addr][i] := spi.Read
     io.High(_CS)
 
-PRI writeReg(reg, nr_bytes, buff_addr) | i
-' Write nr_bytes to register 'reg' stored at buff_addr
-    case reg
+PRI writeReg(reg_nr, nr_bytes, buff_addr) | i
+' Write nr_bytes to reg_nrister 'reg_nr' stored at buff_addr
+    case reg_nr
         $00, $01, $06..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $39, $40, $44, $4B, $4D, $5D, $61..$64, $70:
         OTHER:
             return FALSE
 
     io.Low(_CS)
-    spi.Write(reg | core#WRITE)
+    spi.Write(reg_nr | core#WRITE)
 
     repeat i from nr_bytes-1 to 0
         spi.Write(byte[buff_addr][i])
