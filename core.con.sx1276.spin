@@ -266,7 +266,7 @@ CON
     INVERTIQ2                   = $3B
 ' $3C..$3F - RESERVED
 
-#ifndef __propeller2
+#ifndef __propeller2__
 PUB Null
 '' This is not a top-level object
 #endif
