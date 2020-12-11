@@ -505,7 +505,13 @@ PUB LastHdrHadCRC{}: flag
     return (((flag >> core#CRCONPAYLD) & 1) == 1)
 
 PUB LastHdrRate{}: rate
-' Returns coding rate of last header received
+' Coding rate of last header received
+'   Returns:
+'                   k/n
+'       $04_05  =   4/5
+'       $04_06  =   4/6
+'       $04_07  =   4/7
+'       $04_08  =   4/8
     readreg(core#MDMSTAT, 1, @rate)
     rate >>= 5
     return lookup(rate: $04_05, $04_06, $04_07, $04_08)
