@@ -440,11 +440,9 @@ PUB ImplicitHeaderMode(state): curr_state
     state := ((curr_state & core#IMPL_HDRMODEON_MASK) | state) & core#MDMCFG1_MASK
     writereg(core#MDMCFG1, 1, @state)
 
-PUB Interrupt(clear_mask): curr_mask    'XXX break out into IntClear() and Interrupt()
-' Read or clear interrupt flags
-'   Returns: Interrupt flags as a mask
-'   Bits set are asserted
-'   Set bits to clear the corresponding interrupt flags
+PUB IntClear(mask)
+' Clear interrupt flags
+'   Valid values:
 '   Bits %76543210
 '   Bit 7: Receive timeout
 '       6: Receive done
@@ -454,13 +452,27 @@ PUB Interrupt(clear_mask): curr_mask    'XXX break out into IntClear() and Inter
 '       2: CAD done
 '       1: FHSS change channel
 '       0: CAD detected
-    case clear_mask
+'   Any other value is ignored
+    case mask
         %0000_0001..%1111_1111:
-            writereg(core#IRQFLAGS, 1, @clear_mask)
+            writereg(core#IRQFLAGS, 1, @mask)
         other:
-            curr_mask := 0
-            readreg(core#IRQFLAGS, 1, @curr_mask)
             return
+
+PUB Interrupt{}: mask
+' Read interrupt flags
+'   Returns: Interrupt flags as a mask
+'   Bits %76543210
+'   Bit 7: Receive timeout
+'       6: Receive done
+'       5: Payload CRC error
+'       4: Valid header
+'       3: Transmit done
+'       2: CAD done
+'       1: FHSS change channel
+'       0: CAD detected
+    mask := 0
+    readreg(core#IRQFLAGS, 1, @mask)
 
 PUB IntMask(mask): curr_mask
 ' Set interrupt mask
