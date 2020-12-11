@@ -496,19 +496,19 @@ PUB IntMask(mask): curr_mask
             readreg(core#IRQFLAGS_MASK, 1, @curr_mask)
             return curr_mask
 
-PUB LastHeaderCodingRate{}: rate
+PUB LastHdrHadCRC{}: flag
+' Indicates if last header received with CRC on
+'   Returns:
+'       FALSE (0): Header indicates CRC is off
+'       TRUE (-1): Header indicates CRC is on
+    readreg(core#HOPCHANNEL, 1, @flag)
+    return (((flag >> core#CRCONPAYLD) & 1) == 1)
+
+PUB LastHdrRate{}: rate
 ' Returns coding rate of last header received
     readreg(core#MDMSTAT, 1, @rate)
     rate >>= 5
     return lookup(rate: $04_05, $04_06, $04_07, $04_08)
-
-PUB LastHeaderCRC{}: flag   'XXX rename and make boolean return?
-' Indicates if last header received with CRC on
-'   Returns:
-'       0: Header indicates CRC is off
-'       1: Header indicates CRC is on
-    readreg(core#HOPCHANNEL, 1, @flag)
-    return (flag >> core#CRCONPAYLD) & 1
 
 PUB LastPacketBytes{}: nr_bytes
 ' Returns number of payload bytes of last packet received
