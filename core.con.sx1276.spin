@@ -5,7 +5,7 @@
     Description: Low-level constants
     Copyright (c) 2020
     Started Oct 6, 2019
-    Updated Dec 9, 2020
+    Updated Dec 11, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -101,8 +101,11 @@ CON
     PADAC_MASK                  = $07
         PADAC_RSVD              = 3
         PADAC_RSVD_BITS         = %11111
+        PADAC_RSVD_DEF          = $10 < PADAC_RSVD
         PA_DAC                  = 0
         PA_DAC_BITS             = %111
+        PA_DEF                  = %100
+        PA_BOOST                = %111
 
     FORMERTEMP                  = $5B
     AGCREF                      = $61

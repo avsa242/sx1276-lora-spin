@@ -6,7 +6,7 @@
         LoRa/FSK/OOK transceiver
     Copyright (c) 2020
     Started Oct 6, 2019
-    Updated Dec 9, 2020
+    Updated Dec 11, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -16,21 +16,22 @@ CON
     FXOSC                   = 32_000_000
     TWO_19                  = 1 << 19
     TWO_24                  = 1 << 24
-    FPSCALE                 = 10_000_000
-    FSTEP                   = 61_0351562  ' (FXOSC / TWO_19) * FPSCALE
+    FPSCALE                 = 10_000_000        ' scaling factor used in math
+    FSTEP                   = 61_0351562        ' (FXOSC / TWO_19) * FPSCALE
+
 ' Long-range modes
     LRMODE_FSK_OOK          = 0
     LRMODE_LORA             = 1
 
 ' Device modes
-    DEVMODE_SLEEP           = %000
-    DEVMODE_STDBY           = %001
-    DEVMODE_FSTX            = %010
-    DEVMODE_TX              = %011
-    DEVMODE_FSRX            = %100
-    DEVMODE_RXCONT          = %101
-    DEVMODE_RXSINGLE        = %110
-    DEVMODE_CAD             = %111
+    SLEEPMODE               = %000
+    STDBY                   = %001
+    FSTX                    = %010
+    TX                      = %011
+    FSRX                    = %100
+    RXCONT                  = %101
+    RXSINGLE                = %110
+    CAD                     = %111
 
 ' Transmit modes
     TXMODE_NORMAL           = 0
@@ -63,12 +64,13 @@ CON
     CLKOUT_OFF              = 7
 
 ' Power Amplifier output pin selection
-    PAOUT_RFO               = 0
-    PAOUT_PABOOST           = 1 << core#PASELECT
+    RFO                     = 0
+    PABOOST                 = 1 << core#PASELECT
 
 VAR
 
     long _CS, _SCK, _MOSI, _MISO
+    long _txsig_routing
 
 OBJ
 
@@ -125,7 +127,7 @@ PUB CarrierFreq(freq): curr_freq | opmode_orig
         137_000_000..175_000_000, 410_000_000..525_000_000, 862_000_000..1_020_000_000:
             freq := u64.multdiv(freq, FPSCALE, FSTEP)
             opmode_orig := opmode(-2)
-            opmode(DEVMODE_STDBY)
+            opmode(STDBY)
             writereg(core#FRFMSB, 3, @freq)
             opmode(opmode_orig)
         other:
@@ -422,7 +424,7 @@ PUB HopPeriod(symb_periods): curr_periods
 
 PUB Idle{}
 ' Change chip state to idle (standby)
-    opmode(DEVMODE_STDBY)
+    opmode(STDBY)
 
 PUB ImplicitHeaderMode(state): curr_state
 ' Enable implicit header mode
@@ -557,7 +559,7 @@ PUB LongRangeMode(mode): curr_mode
     writereg(core#OPMODE, 1, @mode)
 
     time.msleep(10)
-    opmode(DEVMODE_STDBY)
+    opmode(STDBY)
 
 PUB LowDataRateOptimize(state) | curr_state
 ' Optimize for low data rates
@@ -604,19 +606,19 @@ PUB ModemStatus{}: status
 PUB OpMode(mode): curr_mode
 ' Set device operating mode
 '   Valid values:
-'       DEVMODE_SLEEP (%000): Sleep
-'      *DEVMODE_STDBY (%001): Standby
-'       DEVMODE_FSTX (%010): Frequency synthesis TX
-'       DEVMODE_TX (%011): Transmit
-'       DEVMODE_FSRX (%100): Frequency synthesis RX
-'       DEVMODE_RXCONT (%101): Receive continuous
-'       DEVMODE_RXSINGLE (%110): Receive single
-'       DEVMODE_CAD (%111): Channel activity detection
+'       SLEEP (%000): Sleep
+'      *STDBY (%001): Standby
+'       FSTX (%010): Frequency synthesis TX
+'       TX (%011): Transmit
+'       FSRX (%100): Frequency synthesis RX
+'       RXCONT (%101): Receive continuous
+'       RXSINGLE (%110): Receive single
+'       CAD (%111): Channel activity detection
 '   Any other value polls the chip and returns the current setting
     curr_mode := 0
     readreg(core#OPMODE, 1, @curr_mode)
     case mode
-        DEVMODE_SLEEP..DEVMODE_CAD:
+        SLEEP..CAD:
         other:
             return curr_mode & core#MODE_BITS
 
@@ -752,7 +754,7 @@ PUB RXBandwidth(bw) | curr_bw
 
 PUB RXMode{}
 ' Change chip state to RX (receive)
-    opmode(DEVMODE_RXCONT)
+    opmode(RXCONT)
 
 PUB RXOngoing{}: flag
 ' Flag indicating modem is in ongoing receive mode
@@ -797,7 +799,7 @@ PUB SignalSynchronized{}: flag
 
 PUB Sleep{}
 ' Power down chip
-    opmode(DEVMODE_SLEEP)
+    opmode(SLEEP)
 
 PUB SpreadingFactor(cps) | curr_cps
 ' Set spreading factor rate, in chips per symbol
@@ -828,25 +830,26 @@ PUB SyncWord(val): curr_val
             readreg(core#SYNCWORD, 1, @curr_val)
             return curr_val
 
-PUB TX{}
-' Change chip state to TX (transmit)
-    opmode(DEVMODE_TX)
-
-PUB TXMode(mode): curr_mode 'XXX breaks common API - move the mode switch functionality elsewhere
-' Set transmit mode
+PUB TXContinuous(state): curr_state
+' Set continuous transmit mode
 '   Valid values:
 '      *TXMODE_NORMAL (0): Normal mode; a single packet is sent
 '       TXMODE_CONT (1): Continuous mode; send multiple packets across the FIFO
-    curr_mode := 0
-    readreg(core#MDMCFG2, 1, @curr_mode)
-    case mode
+'   Any other value polls the chip and returns the current setting
+    curr_state := 0
+    readreg(core#MDMCFG2, 1, @curr_state)
+    case state
         TXMODE_NORMAL, TXMODE_CONT:
-            mode <<= core#TXCONTMODE
+            state <<= core#TXCONTMODE
         other:
-            return (curr_mode >> core#TXCONTMODE) & 1
+            return (curr_state >> core#TXCONTMODE) & 1
 
-    mode := ((curr_mode & core#TXCONTMODE_MASK) | mode) & core#MDMCFG2_MASK
-    writereg(core#MDMCFG2, 1, @mode)
+    state := ((curr_state & core#TXCONTMODE_MASK) | state) & core#MDMCFG2_MASK
+    writereg(core#MDMCFG2, 1, @state)
+
+PUB TXMode{}
+' Change chip state to transmit
+    opmode(TXMODE_NORMAL)
 
 PUB TXPayload(nr_bytes, ptr_buff)
 ' Queue data to be transmitted in the TX FIFO
@@ -858,62 +861,66 @@ PUB TXPayload(nr_bytes, ptr_buff)
         other:
             return
 
-PUB TXPower(pwr, outpin): curr_pwr | pa_dac  'XXX 2nd param breaks common API - move elsewhere
+PUB TXPower(pwr): curr_pwr | pa_dac
 ' Set transmit power, in dBm
 '   Valid values:
-'       outpin:
-'           PAOUT_RFO (0): Signal routed to RFO pin, max power is +14dBm
-'               pwr: -1..14
-'           PAOUT_PABOOST (128): Signal routed to PA_BOOST pin, max power is +23dBm
-'               pwr: 5..23
+'       -1..14 (when TXSigRouting() == RFO)
+'       5..23 (when TXSigRouting() == PABOOST)
 '   Any other value polls the chip and returns the current setting
     curr_pwr := pa_dac := 0
     readreg(core#PACFG, 1, @curr_pwr)
     readreg(core#PADAC, 1, @pa_dac)
-    case outpin
-        PAOUT_RFO:
+    case _txsig_routing
+        RFO:
             case pwr
                 -1..14:
                     curr_pwr := (7 << core#MAXPWR) | (pwr + 1)
                 other:
                     return (curr_pwr & core#OUTPUTPWR_BITS) - 1
-
             writereg(core#PACFG, 1, @curr_pwr)
-
-        PAOUT_PABOOST:
+        PABOOST:
             case pwr
                 5..20:
-                    pa_dac := ($10 << core#PADAC_RSVD) | %100
-
-                21..23:
-                    pa_dac := ($10 << core#PADAC_RSVD) | %111
+                    pa_dac := core#PADAC_RSVD_DEF | core#PA_DEF ' preserve the
+                21..23:                                         ' reserved bits
+                    pa_dac := core#PADAC_RSVD_DEF | core#PA_BOOST
                     pwr -= 3
-
                 other:
-                    case pa_dac & %111
-                        %100:
+                    case pa_dac & core#PA_DAC_BITS
+                        core#PA_DEF:
                             return (curr_pwr & core#OUTPUTPWR_BITS) + 5
-                        %111:
+                        core#PA_BOOST:
                             return (curr_pwr & core#OUTPUTPWR_BITS) + 8
                         other:
                             return pa_dac
                     return
-
             curr_pwr := (1 << core#PASELECT) | (pwr - 5)
             writereg(core#PADAC, 1, @pa_dac)
             writereg(core#PACFG, 1, @curr_pwr)
-
         other:
             return (curr_pwr & core#OUTPUTPWR_BITS) - 1
 
+PUB TXSigRouting(pin): curr_pin
+' Set transmit signal output routing
+'   Valid values:
+'      *RFO (0): Signal routed to RFO pin, max power is +14dBm
+'       PABOOST (128): Signal routed to PA_BOOST pin, max power is +23dBm
+'   NOTE: This has a direct effect on the maximum output power available
+'       using the TXPower() method
+    case pin
+        RFO, PABOOST:
+            _txsig_routing := pin
+        other:
+            return _txsig_routing
+
 PUB ValidHeadersReceived{}: nr_hdrs
 ' Returns number of valid headers received since last transition into receive mode
-'   NOTE: To reset counter, set device to DEVMODE_SLEEP
+'   NOTE: To reset counter, set device to SLEEP
     readreg(core#RXHDRCNTVALUEMSB, 2, @nr_hdrs)
 
 PUB ValidPacketsReceived{}: nr_pkts
 ' Returns number of valid packets received since last transition into receive mode
-'   NOTE: To reset counter, set device to DEVMODE_SLEEP
+'   NOTE: To reset counter, set device to SLEEP
     readreg(core#RXPACKETCNTVALUEMSB, 2, @nr_pkts)
 
 PRI readReg(reg, nr_bytes, ptr_buff) | tmp
