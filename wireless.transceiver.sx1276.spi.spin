@@ -78,6 +78,10 @@ CON
     CAD_DETECT              = 1                 ' channel activity detected
     INT_ALL                 = $FF
 
+' Payload length mode
+    PKTLEN_VAR              = 0
+    PKTLEN_FIXED            = 1
+
 VAR
 
     long _CS, _SCK, _MOSI, _MISO
@@ -121,7 +125,7 @@ PUB PresetLoRa{}
     agcmode(false)
     coderate($04_05)
     crccheckenabled(false)
-    implicitheadermode(false)
+    payloadlencfg(PKTLEN_VAR)
     lnagain(0)
     lowfreqmode(true)
     preamblelength(8)
@@ -455,22 +459,6 @@ PUB Idle{}
 ' Change chip state to idle (standby)
     opmode(STDBY)
 
-PUB ImplicitHeaderMode(state): curr_state   'XXX rename to PayloadLenCfg(), params: FIXED, VAR
-' Enable implicit header mode
-'   Valid values:
-'       TRUE(-1 or 1), *FALSE (0)
-'   Any other value polls the chip and returns the current setting
-    curr_state := 0
-    readreg(core#MDMCFG1, 1, @curr_state)
-    case ||(state)
-        0, 1:
-            state := ||(state) & 1
-        other:
-            return ((curr_state & 1) == 1)
-
-    state := ((curr_state & core#IMPL_HDRMODEON_MASK) | state) & core#MDMCFG1_MASK
-    writereg(core#MDMCFG1, 1, @state)
-
 PUB IntClear(mask)
 ' Clear interrupt flags
 '   Valid values:
@@ -706,6 +694,22 @@ PUB PacketSNR{}: snr
     if snr & $80
         -snr
     return (snr / 4)
+
+PUB PayloadLenCfg(mode): curr_mode
+' Set payload length configuration/mode
+'   Valid values:
+'       PKTLEN_VAR (0): Variable-length payload
+'       PKTLEN_FIXED (1): Fixed-length payload
+'   Any other value polls the chip and returns the current setting
+    curr_mode := 0
+    readreg(core#MDMCFG1, 1, @curr_mode)
+    case mode
+        0, 1:
+        other:
+            return (curr_mode & 1)
+
+    mode := ((curr_mode & core#IMPL_HDRMODEON_MASK) | mode) & core#MDMCFG1_MASK
+    writereg(core#MDMCFG1, 1, @mode)
 
 PUB PayloadLength(len): curr_len
 ' Set payload length, in bytes
