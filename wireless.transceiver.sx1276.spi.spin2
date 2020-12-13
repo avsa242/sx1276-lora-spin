@@ -699,6 +699,9 @@ PUB PayloadLenCfg(mode=-2): curr_mode
 '       PKTLEN_VAR (0): Variable-length payload
 '       PKTLEN_FIXED (1): Fixed-length payload
 '   Any other value polls the chip and returns the current setting
+'   NOTE: When using PKTLEN_FIXED, PayloadLength(), CodeRate(), and
+'       CRCCheckEnabled() must be configured identically on both
+'       TX and RX sides of the radio link.
     curr_mode := 0
     readreg(core.MDMCFG1, 1, @curr_mode)
     case mode
