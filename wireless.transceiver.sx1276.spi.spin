@@ -869,6 +869,8 @@ PUB TXContinuous(state): curr_state
 '      *TXMODE_NORMAL (0): Normal mode; a single packet is sent
 '       TXMODE_CONT (1): Continuous mode; send multiple packets across the FIFO
 '   Any other value polls the chip and returns the current setting
+'   NOTE: TXMODE_CONT is used for spectral analysis. Typically, TXMODE_NORMAL
+'       should be used
     curr_state := 0
     readreg(core#MDMCFG2, 1, @curr_state)
     case state
