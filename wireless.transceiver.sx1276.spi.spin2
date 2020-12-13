@@ -131,6 +131,73 @@ PUB PresetLoRa()
     spreadfactor(7)
     syncword($12)
 
+PUB PresetDR0()
+' Physical bitrate (Rb) 980
+    presetlora()
+    spreadfactor(10)
+'    rxbandwidth(125_000)
+
+PUB PresetDR1()
+' Physical bitrate (Rb) 1760
+    presetlora()
+    spreadfactor(9)
+'    rxbandwidth(125_000)
+
+PUB PresetDR2()
+' Physical bitrate (Rb) 3125
+    presetlora()
+    spreadfactor(8)
+'    rxbandwidth(125_000)
+
+PUB PresetDR3()
+' Physical bitrate (Rb) 5470
+    presetlora()
+'    spreadfactor(7)
+'    rxbandwidth(125_000)
+
+PUB PresetDR4()
+' Physical bitrate (Rb) 12500
+    presetlora()
+    spreadfactor(8)
+'    rxbandwidth(125_000)
+
+PUB PresetDR8()
+' Physical bitrate (Rb) 980
+    presetlora()
+    spreadfactor(12)
+    rxbandwidth(500_000)
+
+PUB PresetDR9()
+' Physical bitrate (Rb) 1760
+    presetlora()
+    spreadfactor(11)
+    rxbandwidth(500_000)
+
+PUB PresetDR10()
+' Physical bitrate (Rb) 3900
+    presetlora()
+    spreadfactor(10)
+    rxbandwidth(500_000)
+
+PUB PresetDR11()
+' Physical bitrate (Rb) 7000
+    presetlora()
+    spreadfactor(9)
+    rxbandwidth(500_000)
+
+PUB PresetDR12()
+'  Physical bitrate (Rb) 12500
+    presetlora()
+    spreadfactor(8)
+    rxbandwidth(500_000)
+
+PUB PresetDR13()
+' Physical bitrate (Rb) 21900
+    presetlora()
+'    spreadfactor(7)
+    rxbandwidth(500_000)
+
+
 PUB AGCMode(state=-2): curr_state
 ' Enable AGC
 '   Valid values:
