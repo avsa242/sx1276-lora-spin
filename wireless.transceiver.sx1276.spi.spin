@@ -67,6 +67,17 @@ CON
     RFO                     = 0
     PABOOST                 = 1 << core#PASELECT
 
+' Interrupt flags
+    RX_TIMEOUT              = 1 << 7            ' receive timeout
+    RX_DONE                 = 1 << 6            ' receive done
+    PYLD_CRCERR             = 1 << 5            ' payload CRC error
+    VALID_HDR               = 1 << 4            ' valid header
+    TX_DONE                 = 1 << 3            ' transmit done
+    CAD_DONE                = 1 << 2            ' channel activity detect done
+    FHSS_CHG                = 1 << 1            ' FHSS change channel
+    CAD_DETECT              = 1                 ' channel activity detected
+    INT_ALL                 = $FF
+
 VAR
 
     long _CS, _SCK, _MOSI, _MISO
@@ -83,24 +94,41 @@ OBJ
 PUB Null{}
 ' This is not a top-level object
 
-PUB Start(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_DELAY): okay
+PUB Start(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): okay
 
-    if lookdown(CS_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
-        if SCK_DELAY => 1
-            if okay := spi.start(SCK_DELAY, core#CPOL)
-                time.msleep(10)
-                longmove(@_CS, @CS_PIN, 4)
-
-                io.high(_CS)
-                io.output(_CS)
-                if lookdown(deviceid{}: $11, $12)
-                    return okay
-
-    return FALSE                                            'If we got here, something went wrong
+    if lookdown(CS_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and {
+}   lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
+        if okay := spi.start(core#CLK_DELAY, core#CPOL)
+            time.msleep(10)
+            longmove(@_CS, @CS_PIN, 4)
+            io.high(_CS)
+            io.output(_CS)
+            if lookdown(deviceid{}: $11, $12)
+                return okay
+    return FALSE                                ' something above failed
 
 PUB Stop{}
 
     spi.stop{}
+
+PUB Defaults{}
+' Set factory defaults
+
+PUB PresetLoRa{}
+' Switch modem to LoRa mode, then set factory defaults
+    longrangemode(LRMODE_LORA)
+
+    agcmode(false)
+    coderate($04_05)
+    crccheckenabled(false)
+    implicitheadermode(false)
+    lnagain(0)
+    lowfreqmode(true)
+    preamblelength(8)
+    rxbandwidth(125_000)
+    rxtimeout(100)
+    spreadingfactor(128)
+    syncword($12)
 
 PUB AGCMode(state): curr_state
 ' Enable AGC
@@ -123,6 +151,7 @@ PUB CarrierFreq(freq): curr_freq | opmode_orig
 '   Valid values: See case table below
 '   Any other value polls the chip and returns the current setting
 '   NOTE: The default is 434_000_000
+    opmode_orig := 0
     case freq
         137_000_000..175_000_000, 410_000_000..525_000_000, 862_000_000..1_020_000_000:
             freq := u64.multdiv(freq, FPSCALE, FSTEP)
@@ -133,9 +162,9 @@ PUB CarrierFreq(freq): curr_freq | opmode_orig
         other:
             curr_freq := 0
             readreg(core#FRFMSB, 3, @curr_freq)
-            return u64.MultDiv (FSTEP, curr_freq, FPSCALE)
+            return u64.multdiv(FSTEP, curr_freq, FPSCALE)
 
-PUB Channel(number) | curr_chan
+PUB Channel(number): curr_chan
 ' Set LoRa uplink channel
 '   Valid values: 0..63
 '   Any other value polls the chip and returns the current setting
@@ -426,7 +455,7 @@ PUB Idle{}
 ' Change chip state to idle (standby)
     opmode(STDBY)
 
-PUB ImplicitHeaderMode(state): curr_state
+PUB ImplicitHeaderMode(state): curr_state   'XXX rename to PayloadLenCfg(), params: FIXED, VAR
 ' Enable implicit header mode
 '   Valid values:
 '       TRUE(-1 or 1), *FALSE (0)
@@ -479,7 +508,6 @@ PUB Interrupt{}: mask
 PUB IntMask(mask): curr_mask
 ' Set interrupt mask
 '   Valid values:
-'       Set a bit to disable the interrupt flag
 '       Bits: 76543210
 '       Bit 7: Receive timeout
 '           6: Receive done
@@ -492,11 +520,12 @@ PUB IntMask(mask): curr_mask
 '   Any other value polls the chip and returns the current setting
     case mask
         %0000_0000..%1111_1111:
-            writereg(core#IRQFLAGS_MASK, 1, @mask)
+            mask ^= $FF                         ' invert bits so 1 sets,
+            writereg(core#IRQFLAGS_MASK, 1, @mask)' and 0 clears
         other:
             curr_mask := 0
             readreg(core#IRQFLAGS_MASK, 1, @curr_mask)
-            return curr_mask
+            return curr_mask ^ $FF
 
 PUB LastHdrHadCRC{}: flag
 ' Indicates if last header received with CRC on
@@ -550,18 +579,18 @@ PUB LongRangeMode(mode): curr_mode
     readreg(core#OPMODE, 1, @curr_mode)
     case mode
         LRMODE_FSK_OOK, LRMODE_LORA:
-            mode := mode << core#LONGRANGEMODE
+            mode <<= core#LONGRANGEMODE
         other:
             return (curr_mode >> core#LONGRANGEMODE) & 1
 
-    'MODE_MASK: set operating mode to SLEEP (required to change LoRa modes)
-    mode := ((curr_mode & core#MODE_MASK & core#LONGRANGEMODE_MASK))
+    'MODE_MASK: set operating mode to SLEEPMODE (required to change LoRa modes)
+    mode := (curr_mode & core#MODE_MASK & core#LONGRANGEMODE_MASK) | mode
     writereg(core#OPMODE, 1, @mode)
 
     time.msleep(10)
     opmode(STDBY)
 
-PUB LowDataRateOptimize(state) | curr_state
+PUB LowDataRateOptimize(state): curr_state
 ' Optimize for low data rates
 '   Valid values:
 '       TRUE (-1 or 1), FALSE (0)
@@ -606,7 +635,7 @@ PUB ModemStatus{}: status
 PUB OpMode(mode): curr_mode
 ' Set device operating mode
 '   Valid values:
-'       SLEEP (%000): Sleep
+'       SLEEPMODE (%000): Sleep
 '      *STDBY (%001): Standby
 '       FSTX (%010): Frequency synthesis TX
 '       TX (%011): Transmit
@@ -618,7 +647,7 @@ PUB OpMode(mode): curr_mode
     curr_mode := 0
     readreg(core#OPMODE, 1, @curr_mode)
     case mode
-        SLEEP..CAD:
+        SLEEPMODE..CAD:
         other:
             return curr_mode & core#MODE_BITS
 
@@ -641,7 +670,7 @@ PUB OverCurrentProt(state): curr_state
     state := ((curr_state & core#OCPON_MASK) | state) & core#OCP_MASK
     writereg(core#OCP, 1, @state)
 
-PUB OverCurrentTrim(current) | curr_val
+PUB OverCurrentTrim(current): curr_val
 ' Trim over-current protection, to milliamps
 '   Valid values: 45..240mA
 '   Any other value polls the chip and returns the current setting
@@ -714,7 +743,7 @@ PUB PLLLocked{}: flag
                                                 ' is reversed in the datasheet,
                                                 ' so invert the bit here
 
-PUB PreambleLength(length) | curr_len
+PUB PreambleLength(length):  curr_len
 ' Set preamble length, in bits
 '   Valid values: 0..65535
 '   Any other value polls the chip and returns the current setting
@@ -732,11 +761,13 @@ PUB RSSI{}: val
     readreg(core#LORA_RSSIVALUE, 1, @val)
     return (-157 + val)
 
-PUB RXBandwidth(bw) | curr_bw
+PUB RXBandwidth(bw): curr_bw
 ' Set receive bandwidth, in Hz
 '   Valid values: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, *125_000, 250_000, 500_000
 '   Any other value polls the chip and returns the current setting
-'   NOTE: In the lower band, 250_000 and 500_000 are not supported
+'   NOTE: This setting also directly affects occupied RF bandwidth
+'       when transmitting
+'   NOTE: In the lower band, 250_000 and 500_000 are not supported - XXX clarify
     curr_bw := 0
     readreg(core#MDMCFG1, 1, @curr_bw)
     case bw
@@ -799,9 +830,9 @@ PUB SignalSynchronized{}: flag
 
 PUB Sleep{}
 ' Power down chip
-    opmode(SLEEP)
+    opmode(SLEEPMODE)
 
-PUB SpreadingFactor(cps) | curr_cps
+PUB SpreadingFactor(cps): curr_cps  'XXX change param to log2 of cps, instead (more standard)
 ' Set spreading factor rate, in chips per symbol
 '   Valid values: 64, *128, 256, 512, 1024, 2048, 4096
 '   Any other value polls the chip and returns the current setting
@@ -849,7 +880,7 @@ PUB TXContinuous(state): curr_state
 
 PUB TXMode{}
 ' Change chip state to transmit
-    opmode(TXMODE_NORMAL)
+    opmode(TX)
 
 PUB TXPayload(nr_bytes, ptr_buff)
 ' Queue data to be transmitted in the TX FIFO
@@ -915,12 +946,12 @@ PUB TXSigRouting(pin): curr_pin
 
 PUB ValidHeadersReceived{}: nr_hdrs
 ' Returns number of valid headers received since last transition into receive mode
-'   NOTE: To reset counter, set device to SLEEP
+'   NOTE: To reset counter, set device to SLEEPMODE
     readreg(core#RXHDRCNTVALUEMSB, 2, @nr_hdrs)
 
 PUB ValidPacketsReceived{}: nr_pkts
 ' Returns number of valid packets received since last transition into receive mode
-'   NOTE: To reset counter, set device to SLEEP
+'   NOTE: To reset counter, set device to SLEEPMODE
     readreg(core#RXPACKETCNTVALUEMSB, 2, @nr_pkts)
 
 PRI readReg(reg, nr_bytes, ptr_buff) | tmp
