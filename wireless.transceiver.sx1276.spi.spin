@@ -954,32 +954,32 @@ PUB ValidPacketsReceived{}: nr_pkts
 '   NOTE: To reset counter, set device to SLEEPMODE
     readreg(core#RXPACKETCNTVALUEMSB, 2, @nr_pkts)
 
-PRI readReg(reg, nr_bytes, ptr_buff) | tmp
+PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Read nr_bytes from device into ptr_buff
-    case reg
+    case reg_nr
         $00, $01, $06..$2A, $2C, $2F, $39, $40, $42, $44, $4B, $4D, $5B, $5D,{
 }       $61..$64, $70:
         other:
             return
 
     io.low(_CS)
-    spi.shiftout(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg)
+    spi.shiftout(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg_nr)
 
     repeat tmp from nr_bytes-1 to 0
         byte[ptr_buff][tmp] := spi.shiftin(_MISO, _SCK, core#MISO_BITORDER, 8)
 
     io.high(_CS)
 
-PRI writeReg(reg, nr_bytes, ptr_buff) | tmp
+PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes from ptr_buff to device
-    case reg
+    case reg_nr
         $00, $01, $06..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $39, $40,{
 }       $44, $4B, $4D, $5D, $61..$64, $70:
         other:
             return
 
     io.low(_CS)
-    spi.shiftout(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg | core#WRITE)
+    spi.shiftout(_MOSI, _SCK, core#MOSI_BITORDER, 8, reg_nr | core#WRITE)
 
     repeat tmp from nr_bytes-1 to 0
         spi.shiftout(_MOSI, _SCK, core#MOSI_BITORDER, 8, byte[ptr_buff][tmp])
