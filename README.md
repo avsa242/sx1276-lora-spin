@@ -7,9 +7,9 @@ This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Semtech
 
 ## Salient Features
 
-* SPI connection at up to 1MHz (Propeller 2/spin2 TBD)
-* Change transceiver frequency to anything within the SX1276's tunable range (NOTE: Only tested on the 915MHz band)
-* Change transceiver frequency by LoRa uplink channel number (NOTE: Currently limited to US/915MHz band)
+* SPI connection at up to 1MHz (P1), 10MHz (P2)
+* Change transceiver frequency to anything within the SX1276's tunable range
+* Change transceiver frequency by LoRa uplink channel number
 * Change common transceiver settings, such as: code rate, spreading factor, bandwidth, preamble length, payload length, LNA gain, transmit power
 * Change device operating mode, interrupt mask, implicit header mode
 * Change DIO pins functionality
@@ -36,13 +36,13 @@ P2/SPIN2:
 ## Limitations
 
 * Very early in development - may malfunction, or outright fail to build
-* Channel method is currently limited to US band plan
+* Channel() method is currently limited to US band plan (due to local hardware on-hand)
 * Doesn't support the SX1276's FSK/OOK packet radio mode (currently unplanned)
 * Doesn't support FHSS
 
 ## TODO
 - [x] Implement method to change TX power
-- [ ] Write ANSI-compatible terminal version of demo (WIP)
+- [x] Write ANSI-compatible terminal version of demo
 - [ ] Implement support for other band plans
 - [x] Make settings in the demo runtime changeable (WIP)
 - [ ] Implement FHSS
