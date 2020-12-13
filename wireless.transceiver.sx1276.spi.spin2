@@ -87,9 +87,7 @@ OBJ
 
     spi : "com.spi"
     core: "core.con.sx1276"
-    time: "time"
     u64 : "math.unsigned64"
-    io  : "io"
 
 PUB Null()
 ' This is not a top-level object
