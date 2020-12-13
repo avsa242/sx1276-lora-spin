@@ -124,7 +124,7 @@ PUB PresetLoRa()
     preamblelength(8)
     rxbandwidth(125_000)
     rxtimeout(100)
-    spreadingfactor(128)
+    spreadfactor(7)
     syncword($12)
 
 PUB AGCMode(state=-2): curr_state
@@ -830,22 +830,20 @@ PUB Sleep()
 ' Power down chip
     opmode(SLEEPMODE)
 
-PUB SpreadingFactor(cps=-2): curr_cps  'XXX change param to log2 of cps, instead (more standard)
-' Set spreading factor rate, in chips per symbol
-'   Valid values: 64, *128, 256, 512, 1024, 2048, 4096
+PUB SpreadFactor(sf=-2): curr_sf
+' Set spreading factor
+'   Valid values: 6, *7, 8, 9, 10, 11, 12
 '   Any other value polls the chip and returns the current setting
-    curr_cps := $00
-    readreg(core.MDMCFG2, 1, @curr_cps)
-    case cps
-        64, 128, 256, 512, 1024, 2048, 4096:
-            cps := (lookdown(cps: 64, 128, 256, 512, 1024, 2048, 4096) + 5){
-}           << core.SPREADFACT
+    curr_sf := 0
+    readreg(core.MDMCFG2, 1, @curr_sf)
+    case sf
+        6..12:
+            sf <<= core.SPREADFACT
         other:
-            curr_cps := (curr_cps >> core.SPREADFACT)-5
-            return lookup(curr_cps: 64, 128, 256, 512, 1024, 2048, 4096)
+            return (curr_sf >> core.SPREADFACT)
 
-    cps := ((curr_cps & core.SPREADFACT_MASK) | cps) & core.MDMCFG2_MASK
-    writereg(core.MDMCFG2, 1, @cps)
+    sf := ((curr_sf & core.SPREADFACT_MASK) | sf) & core.MDMCFG2_MASK
+    writereg(core.MDMCFG2, 1, @sf)
 
 PUB SyncWord(val=-2): curr_val
 ' Set LoRa Syncword
