@@ -771,7 +771,7 @@ PUB RXBandwidth(bw): curr_bw
 '   Any other value polls the chip and returns the current setting
 '   NOTE: This setting also directly affects occupied RF bandwidth
 '       when transmitting
-'   NOTE: In the lower band, 250_000 and 500_000 are not supported - XXX clarify
+'   NOTE: In the 169MHz band, 250_000 and 500_000 are not supported
     curr_bw := 0
     readreg(core#MDMCFG1, 1, @curr_bw)
     case bw
