@@ -4,9 +4,9 @@
     Author: Jesse Burt
     Description: Driver for the SEMTECH SX1276
         LoRa/FSK/OOK transceiver
-    Copyright (c) 2020
+    Copyright (c) 2021
     Started Oct 6, 2019
-    Updated Dec 11, 2020
+    Updated Jan 13, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -205,7 +205,7 @@ PUB AGCMode(state): curr_state
 '   Valid values:
 '       TRUE(-1 or 1), *FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := $00
+    curr_state := 0
     readreg(core#MDMCFG3, 1, @curr_state)
     case ||(state)
         0, 1:
@@ -241,8 +241,8 @@ PUB Channel(number): curr_chan
 '   NOTE: US band plan (915MHz)
     case number
         0..63:
-            curr_chan := 902_300_000 + (200_000 * number)
-            carrierfreq(curr_chan)
+            number := 902_300_000 + (200_000 * number)
+            carrierfreq(number)
         other:
             curr_chan := carrierfreq(-2)
             return (curr_chan - 902_300_000) / 200_000
@@ -260,8 +260,8 @@ PUB ClkOut(divisor): curr_div
         1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF:
             divisor := lookdownz(divisor: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
         other:
-            result := curr_div & core#CLKOUT_BITS
-            return lookupz(result: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
+            curr_div &= core#CLKOUT_BITS
+            return lookupz(curr_div: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
 
     divisor := ((curr_div & core#CLKOUT_MASK) | divisor) & core#OSC_MASK
     writereg(core#OSC, 1, @divisor)
@@ -281,8 +281,8 @@ PUB CodeRate(rate): curr_rate
         $04_05..$04_08:
             rate := lookdown(rate: $04_05, $04_06, $04_07, $04_08) << core#CODERATE
         other:
-            result := (curr_rate >> core#CODERATE) & core#CODERATE_BITS
-            return lookup(result: $04_05, $04_06, $04_07, $04_08)
+            curr_rate := (curr_rate >> core#CODERATE) & core#CODERATE_BITS
+            return lookup(curr_rate: $04_05, $04_06, $04_07, $04_08)
 
     rate := ((curr_rate & core#CODERATE_MASK) | rate) & core#MDMCFG1_MASK
     writereg(core#MDMCFG1, 1, @rate)
@@ -291,7 +291,7 @@ PUB CRCCheckEnabled(state): curr_state
 ' Enable CRC generation and check on payload
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := $00
+    curr_state := 0
     readreg(core#MDMCFG2, 1, @curr_state)
     case ||(state)
         0, 1:
@@ -500,7 +500,7 @@ PUB FSKRampTime(ramptime): curr_time
 PUB HeaderInfoValid{}: flag
 ' Flag indicating header in received packet is valid (with correct CRC)
 '   Returns: TRUE (-1) if header valid, FALSE (0) otherwise
-    flag := (((modemstatus{} >> 3) & 1) == 1)
+    return (((modemstatus{} >> core#HDR_VALID) & 1) == 1)
 
 PUB HopChannel{}: curr_chan
 ' Returns current frequency hopping channel
@@ -598,7 +598,7 @@ PUB LastHdrRate{}: rate
 '       $04_07  =   4/7
 '       $04_08  =   4/8
     readreg(core#MDMSTAT, 1, @rate)
-    rate >>= 5
+    rate >>= core#RXCODERATE
     return lookup(rate: $04_05, $04_06, $04_07, $04_08)
 
 PUB LastPacketBytes{}: nr_bytes
@@ -679,7 +679,7 @@ PUB LowFreqMode(state): curr_state
 
 PUB ModemClear{}: flag
 ' Flag indicating modem clear
-    return (((modemstatus{} >> 4) & 1) == 1)
+    return (((modemstatus{} >> core#MDM_CLR) & 1) == 1)
 
 PUB ModemStatus{}: status
 ' Return modem status bitmask
@@ -862,7 +862,7 @@ PUB RXMode{}
 
 PUB RXOngoing{}: flag
 ' Flag indicating modem is in ongoing receive mode
-    return (((modemstatus{} >> 2) & 1) == 1)
+    return (((modemstatus{} >> core#RX_ONGOING) & 1) == 1)
 
 PUB RXPayload(nr_bytes, ptr_buff)
 ' Receive data from RX FIFO into buffer at ptr_buff
@@ -899,7 +899,7 @@ PUB SignalDetected{}: flag
 
 PUB SignalSynchronized{}: flag
 ' Flag indicating signal synchronized
-    return (((modemstatus{} >> 1) & 1) == 1)
+    return (((modemstatus{} >> core#SIG_SYNCD) & 1) == 1)
 
 PUB Sleep{}
 ' Power down chip
