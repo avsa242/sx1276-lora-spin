@@ -918,8 +918,12 @@ PUB Reset()
 PUB RSSI(): val
 ' Current RSSI, in dBm
     val := 0
-    readreg(core.LORA_RSSIVALUE, 1, @val)
-    return (-157 + val)
+    if modulation() == LORA
+        readreg(core.LORA_RSSIVALUE, 1, @val)
+        return (-157 + val)
+    else
+        readreg(core.RSSIVALUE, 1, @val)
+        return -(val / 2)
 
 PUB RSSIThresh(thresh=-255): curr_thr
 ' Set threshold for triggering RSSI interrupt, in dBm
