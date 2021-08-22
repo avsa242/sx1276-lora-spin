@@ -19,9 +19,10 @@ CON
     FPSCALE                 = 10_000_000        ' scaling factor used in math
     FSTEP                   = 61_0351562        ' (FXOSC / TWO_19) * FPSCALE
 
-' Long-range modes
-    LRMODE_FSK_OOK          = 0
-    LRMODE_LORA             = 1
+' Modulation modes
+    FSK                     = 0
+    OOK                     = 1
+    LORA                    = 4
 
 ' Device modes
     SLEEPMODE               = %000
@@ -124,7 +125,7 @@ PUB Defaults()
 
 PUB PresetLoRa()
 ' Switch modem to LoRa mode, then set factory defaults
-    longrangemode(LRMODE_LORA)
+    modulation(LORA)
 
     agcmode(false)
     coderate($04_05)
@@ -626,28 +627,6 @@ PUB LNAGain(gain=-2): curr_gain
     gain := ((curr_gain & core.LNAGAIN_MASK) | gain) & core.LNA_MASK
     writereg(core.LNA, 1, @curr_gain)
 
-PUB LongRangeMode(mode=-2): curr_mode
-' Set long-range mode
-'   Valid values:
-'      *LRMODE_FSK_OOK (0): FSK, OOK packet radio mode
-'       LRMODE_LORA (1): LoRa radio mode
-'   Any other value polls the chip and returns the current setting
-'   NOTE: The operating mode will be set to STANDBY (idle) after switching long-range modes
-    curr_mode := 0
-    readreg(core.OPMODE, 1, @curr_mode)
-    case mode
-        LRMODE_FSK_OOK, LRMODE_LORA:
-            mode <<= core.LONGRANGEMODE
-        other:
-            return (curr_mode >> core.LONGRANGEMODE) & 1
-
-    'MODE_MASK: set operating mode to SLEEPMODE (required to change LoRa modes)
-    mode := (curr_mode & core.MODE_MASK & core.LONGRANGEMODE_MASK) | mode
-    writereg(core.OPMODE, 1, @mode)
-
-    waitms(10)
-    opmode(STDBY)
-
 PUB LowDataRateOptimize(state=-2): curr_state
 ' Optimize for low data rates
 '   Valid values:
@@ -665,7 +644,7 @@ PUB LowDataRateOptimize(state=-2): curr_state
     state := ((curr_state & core.LOWDRATEOPT_MASK) | state) & core.MDMCFG3_MASK
     writereg(core.MDMCFG3, 1, @state)
 
-PUB LowFreqMode(state=-2): curr_state
+PUB LowFreqMode(state=-2): curr_state | lfmask
 ' Enable Low frequency-specific register access
 '   Valid values:
 '       TRUE (-1 or 1), FALSE (0)
@@ -678,7 +657,11 @@ PUB LowFreqMode(state=-2): curr_state
         other:
             return ((curr_state >> core.LOWFREQMODEON) & 1) == 1
 
-    state := ((curr_state & core.LOWFREQMODEON_MASK) | state) & core.OPMODE_MASK
+    if (curr_state & core.LORA)
+        lfmask := core.LOWFREQMODEONL_MASK
+    else
+        lfmask := core.LOWFREQMODEONL_MASK
+    state := ((curr_state & LFMASK) | state)
     writereg(core.OPMODE, 1, @state)
 
 PUB ModemClear(): flag
@@ -690,7 +673,41 @@ PUB ModemStatus(): status
     readreg(core.MDMSTAT, 1, @status)
     status &= core.MDMSTATUS_BITS
 
-PUB OpMode(mode=-2): curr_mode
+PUB Modulation(mode=-2): curr_mode | lr_mode, opmode_orig
+' Set modulation type
+'   Valid values:
+'      *FSK (0): FSK packet radio mode
+'       OOK (1): OOK packet radio mode
+'       LORA (4): LoRa radio mode
+'   Any other value polls the chip and returns the current setting
+    curr_mode := 0
+    readreg(core.OPMODE, 1, @curr_mode)
+    opmode_orig := (curr_mode & core.MODE_BITS) ' cache user's current opmode
+    case mode
+        FSK, OOK, LORA:                         ' b7..5:
+            mode <<= core.MODTYPE               ' lora: 100, ook: 001, fsk: 000
+        other:
+            return (curr_mode >> core.MODTYPE) & core.MODTYPE_LORA_BITS
+
+    ' special handling required:
+    '   set operating mode to SLEEP (required to change the LORAMODE bit)
+    '   OPMODE's regmask is different when already in LoRa mode
+    '   some register bits meaning differ in the two modes (LoRa vs FSK/OOK)
+    if (curr_mode & core.LORA)                  ' currently in LoRa mode?
+        if (mode & core.LORA)                   ' requested mode is also LoRa
+            return                              '   - no change, so bail out
+        lr_mode := (curr_mode & core.MODEL_MASK & core.LORAMODEL_MASK)
+        mode := (curr_mode & core.MODE_MASK & core.LORAMODE_MASK) | mode
+        writereg(core#OPMODE, 1, @lr_mode)
+        writereg(core#OPMODE, 1, @mode)
+    else
+        mode := (curr_mode & core.MODE_MASK & core.MODTYPE_LORA_MASK) | mode
+        writereg(core.OPMODE, 1, @mode)
+
+    waitus(core.T_POR)                          ' wait for chip to be ready
+    opmode(opmode_orig)                         ' restore user's opmode
+
+PUB OpMode(mode=-2): curr_mode | modemask
 ' Set device operating mode
 '   Valid values:
 '       SLEEPMODE (%000): Sleep
@@ -709,7 +726,11 @@ PUB OpMode(mode=-2): curr_mode
         other:
             return curr_mode & core.MODE_BITS
 
-    mode := ((curr_mode & core.MODE_MASK) | mode) & core.OPMODE_MASK
+    if (curr_mode & core.LORA)
+        modemask := core.MODEL_MASK
+    else
+        modemask := core.MODE_MASK
+    mode := ((curr_mode & modemask) | mode)
     writereg(core.OPMODE, 1, @mode)
 
 PUB OverCurrentProt(state=-2): curr_state
@@ -1061,7 +1082,7 @@ PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
             return
 
     pinl(_CS)
-    spi.wr_byte(reg_nr | core.WRITE)
+    spi.wr_byte(reg_nr | core.SPI_WR)
     spi.wrblock_msbf(ptr_buff, nr_bytes)
     pinh(_CS)
 

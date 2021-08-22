@@ -26,18 +26,28 @@ CON
 
 ' General/shared functionality
     FIFO                        = $00
+
     OPMODE                      = $01
-    OPMODE_MASK                 = $CF
-        LONGRANGEMODE           = 7
+    OPMODEF_MASK                = $EF           ' chip in FSK/OOK mode
+        LORAMODE                = 7
         MODTYPE                 = 5
         LOWFREQMODEON           = 3
         MODE                    = 0
         MODTYPE_BITS            = %11
+        MODTYPE_LORA_BITS       = %111          ' MODTYPE and LORAMODE combined
         MODE_BITS               = %111
-        LONGRANGEMODE_MASK      = (1 << LONGRANGEMODE) ^ OPMODE_MASK
-        MODTYPE_MASK            = (MODTYPE_BITS << MODTYPE) ^ OPMODE_MASK
-        LOWFREQMODEON_MASK      = (1 << LOWFREQMODEON) ^ OPMODE_MASK
-        MODE_MASK               = MODE_BITS ^ OPMODE_MASK
+        LORAMODE_MASK           = (1 << LORAMODE) ^ OPMODEF_MASK
+        MODTYPE_MASK            = (MODTYPE_BITS << MODTYPE) ^ OPMODEF_MASK
+        MODTYPE_LORA_MASK       = (MODTYPE_LORA_BITS << MODTYPE) ^ OPMODEF_MASK
+        LOWFREQMODEON_MASK      = (1 << LOWFREQMODEON) ^ OPMODEF_MASK
+        MODE_MASK               = MODE_BITS ^ OPMODEF_MASK
+        LORA                    = 1 << LORAMODE
+
+    OPMODEL_MASK                = $CF           ' chip in LoRa mode
+        ACCSHRDREG              = 6
+        LORAMODEL_MASK          = (1 << LORAMODE) ^ OPMODEL_MASK
+        LOWFREQMODEONL_MASK     = (1 << LOWFREQMODEON) ^ OPMODEL_MASK
+        MODEL_MASK              = MODE_BITS ^ OPMODEL_MASK
 
     FRFMSB                      = $06
     FRFMID                      = $07

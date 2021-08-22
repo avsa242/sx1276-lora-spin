@@ -20,13 +20,13 @@ CON
     SER_BAUD        = 2_000_000
     LED             = cfg.LED1
 
-    CS_PIN          = 16
-    SCK_PIN         = 17
-    MOSI_PIN        = 18
-    MISO_PIN        = 19
-    SCK_FREQ        = 10_000_000                ' max is 10_000_000
-    RESET_PIN       = 6                         ' use is recommended
+    CS_PIN          = 8
+    SCK_PIN         = 9
+    MOSI_PIN        = 10
+    MISO_PIN        = 11
+    RESET_PIN       = 12                        ' use is recommended
                                                 '   (-1 to disable)
+    SCK_FREQ        = 10_000_000                ' max is 10_000_000
 ' --
 
 OBJ
