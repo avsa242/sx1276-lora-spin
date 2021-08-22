@@ -123,6 +123,18 @@ PUB Stop{}
 PUB Defaults{}
 ' Set factory defaults
 
+PUB PresetFSK_TX4k8{}
+' Switch modem to FSK/OOK mode
+    reset{}
+
+    modulation(FSK)
+
+PUB PresetFSK_RX4k8{}
+' Switch modem to FSK/OOK mode
+    reset{}
+
+    modulation(FSK)
+
 PUB PresetLoRa{}
 ' Switch modem to LoRa mode, then set factory defaults
     modulation(LORA)
@@ -306,6 +318,22 @@ PUB CRCCheckEnabled(state): curr_state
 
     state := ((curr_state & core#RXPAYLDCRCON_MASK) | state) & core#MDMCFG2_MASK
     writereg(core#MDMCFG2, 1, @state)
+
+PUB DataRate(rate): curr_rate
+' Set on-air data rate, in bits per second
+'   Valid values:
+'       1_200..300_000
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Result will be rounded
+'   NOTE: Effective data rate will be halved if Manchester encoding is used
+    case rate
+        1_200..300_000:
+            rate := (FXOSC / rate)
+            writereg(core#BITRATEMSB, 2, @rate)
+        other:
+            curr_rate := 0
+            readreg(core#BITRATEMSB, 2, @curr_rate)
+            return (FXOSC / curr_rate)
 
 PUB DataRateCorrection(ppm): curr_ppm
 ' Set data rate offset value used in conjunction with AFC, in ppm
@@ -1064,7 +1092,7 @@ PUB ValidPacketsReceived{}: nr_pkts
 PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Read nr_bytes from device into ptr_buff
     case reg_nr
-        $00, $01, $06..$2A, $2C, $2F, $39, $40, $42, $44, $4B, $4D, $5B, $5D,{
+        $00, $01..$03, $06..$2A, $2C, $2F, $39, $40, $42, $44, $4B, $4D, $5B, $5D,{
 }       $61..$64, $70:
         other:
             return
@@ -1077,7 +1105,7 @@ PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes from ptr_buff to device
     case reg_nr
-        $00, $01, $06..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $39, $40,{
+        $00, $01..$03, $06..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $39, $40,{
 }       $44, $4B, $4D, $5D, $61..$64, $70:
         other:
             return
