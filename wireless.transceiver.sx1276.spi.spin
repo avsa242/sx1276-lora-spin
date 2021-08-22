@@ -357,6 +357,93 @@ PUB DeviceID{}: id
     id := 0
     readreg(core#VERSION, 1, @id)
 
+PUB FIFOAddrPointer(ptr): curr_ptr
+' Set SPI interface address pointer in FIFO data buffer
+'   Valid values: $00..$FF
+'   Any other value polls the chip and returns the current setting
+    case ptr
+        $00..$FF:
+            writereg(core#FIFOADDRPTR, 1, @ptr)
+        other:
+            curr_ptr := 0
+            readreg(core#FIFOADDRPTR, 1, @curr_ptr)
+            return
+
+PUB FIFORXBasePtr(addr): curr_addr
+' Set start address within FIFO for received data
+'   Valid values: $00..$FF
+'   Any other value polls the chip and returns the current setting
+    case addr
+        $00..$FF:
+            writereg(core#FIFORXBASEADDR, 1, @addr)
+        other:
+            curr_addr := 0
+            readreg(core#FIFORXBASEADDR, 1, @curr_addr)
+            return
+
+PUB FIFORXCurrentAddr{}: addr
+' Start address (in FIFO) of last packet received
+'   Returns: Starting address of last packet received
+    readreg(core#FIFORXCURRENTADDR, 1, @addr)
+
+PUB FIFORXPointer{}: ptr
+' Current value of receive FIFO pointer
+'   Returns: Address of last byte written by LoRa receiver
+    readreg(core#FIFORXBYTEADDR, 1, @ptr)
+
+PUB FIFOTXBasePtr(addr): curr_addr
+' Set start address within FIFO for transmitted data
+'   Valid values: $00..$FF
+'   Any other value polls the chip and returns the current setting
+    case addr
+        $00..$FF:
+            writereg(core#FIFOTXBASEADDR, 1, @addr)
+        other:
+            curr_addr := 0
+            readreg(core#FIFOTXBASEADDR, 1, @curr_addr)
+            return
+
+PUB FreqDeviation(fdev): curr_fdev
+' Set carrier deviation, in Hz
+'   Valid values:
+'       600..300_000
+'       Default is 5_000
+'   Any other value polls the chip and returns the current setting
+'   NOTE: Set value will be rounded
+    case fdev
+        600..300_000:
+            ' freq deviation reg = (freq deviation / FSTEP)
+            fdev := u64.multdiv(fdev, FPSCALE, FSTEP)
+            writereg(core#FDEVMSB, 2, @fdev)
+        other:
+            curr_fdev := 0
+            readreg(core#FDEVMSB, 2, @curr_fdev)
+            return u64.multdiv(curr_fdev, FSTEP, FPSCALE)
+
+PUB FreqError{}: ferr | tmp, bw
+' Estimated frequency error from modem
+    ferr := 0
+    readreg(core#FEIMSB, 3, @ferr)
+    bw := rxbandwidth(-2)
+    ferr := u64.multdiv(ferr, TWO_24, FXOSC)
+    return ferr * (bw / 500)
+
+PUB FSKRampTime(ramptime): curr_time
+' Set Rise/fall time of FSK ramp up/down, in microseconds
+'   Valid values: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, *40, 31, 25, 20, 15, 12, 10
+'   Any other value polls the chip and returns the current setting
+    case ramptime
+        3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12,{
+}       10:
+            ramptime := lookdownz(ramptime: 3400, 2000, 1000, 500, 250, 125,{
+}           100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
+            writereg(core#PARAMP, 1, @ramptime)
+        other:
+            curr_time := 0
+            readreg(core#PARAMP, 1, @curr_time)
+            return lookupz(curr_time: 3400, 2000, 1000, 500, 250, 125, 100,{
+}           62, 50, 40, 31, 25, 20, 15, 12, 10) & core#PA_RAMP_BITS
+
 PUB GPIO0(mode): curr_mode
 ' Assert DIO0 pin on set mode
 '   Valid values:
@@ -459,76 +546,6 @@ PUB GPIO5(mode): curr_mode
 
     mode := ((curr_mode & core#DIO5MAP_MASK) | mode) & core#DIOMAP2_MASK
     writereg(core#DIOMAP2, 1, @mode)
-
-PUB FreqError{}: ferr | tmp, bw
-' Estimated frequency error from modem
-    ferr := 0
-    readreg(core#FEIMSB, 3, @ferr)
-    bw := rxbandwidth(-2)
-    ferr := u64.multdiv(ferr, TWO_24, FXOSC)
-    return ferr * (bw / 500)
-
-PUB FIFOAddrPointer(ptr): curr_ptr
-' Set SPI interface address pointer in FIFO data buffer
-'   Valid values: $00..$FF
-'   Any other value polls the chip and returns the current setting
-    case ptr
-        $00..$FF:
-            writereg(core#FIFOADDRPTR, 1, @ptr)
-        other:
-            curr_ptr := 0
-            readreg(core#FIFOADDRPTR, 1, @curr_ptr)
-            return
-
-PUB FIFORXBasePtr(addr): curr_addr
-' Set start address within FIFO for received data
-'   Valid values: $00..$FF
-'   Any other value polls the chip and returns the current setting
-    case addr
-        $00..$FF:
-            writereg(core#FIFORXBASEADDR, 1, @addr)
-        other:
-            curr_addr := 0
-            readreg(core#FIFORXBASEADDR, 1, @curr_addr)
-            return
-
-PUB FIFOTXBasePtr(addr): curr_addr
-' Set start address within FIFO for transmitted data
-'   Valid values: $00..$FF
-'   Any other value polls the chip and returns the current setting
-    case addr
-        $00..$FF:
-            writereg(core#FIFOTXBASEADDR, 1, @addr)
-        other:
-            curr_addr := 0
-            readreg(core#FIFOTXBASEADDR, 1, @curr_addr)
-            return
-
-PUB FIFORXCurrentAddr{}: addr
-' Start address (in FIFO) of last packet received
-'   Returns: Starting address of last packet received
-    readreg(core#FIFORXCURRENTADDR, 1, @addr)
-
-PUB FIFORXPointer{}: ptr
-' Current value of receive FIFO pointer
-'   Returns: Address of last byte written by LoRa receiver
-    readreg(core#FIFORXBYTEADDR, 1, @ptr)
-
-PUB FSKRampTime(ramptime): curr_time
-' Set Rise/fall time of FSK ramp up/down, in microseconds
-'   Valid values: 3400, 2000, 1000, 500, 250, 125, 100, 62, 50, *40, 31, 25, 20, 15, 12, 10
-'   Any other value polls the chip and returns the current setting
-    case ramptime
-        3400, 2000, 1000, 500, 250, 125, 100, 62, 50, 40, 31, 25, 20, 15, 12,{
-}       10:
-            ramptime := lookdownz(ramptime: 3400, 2000, 1000, 500, 250, 125,{
-}           100, 62, 50, 40, 31, 25, 20, 15, 12, 10)
-            writereg(core#PARAMP, 1, @ramptime)
-        other:
-            curr_time := 0
-            readreg(core#PARAMP, 1, @curr_time)
-            return lookupz(curr_time: 3400, 2000, 1000, 500, 250, 125, 100,{
-}           62, 50, 40, 31, 25, 20, 15, 12, 10) & core#PA_RAMP_BITS
 
 PUB HeaderInfoValid{}: flag
 ' Flag indicating header in received packet is valid (with correct CRC)
@@ -1101,7 +1118,7 @@ PUB ValidPacketsReceived{}: nr_pkts
 PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Read nr_bytes from device into ptr_buff
     case reg_nr
-        $00, $01..$03, $06..$2A, $2C, $2F, $31, $32, $39, $40, $42, $44, $4B, {
+        $00, $01..$2A, $2C, $2F, $31, $32, $39, $40, $42, $44, $4B, {
 }       $4D, $5B, $5D, $61..$64, $70:
         other:
             return
@@ -1114,7 +1131,7 @@ PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes from ptr_buff to device
     case reg_nr
-        $00, $01..$03, $06..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $31, {
+        $00, $01..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $31, {
 }       $32, $39, $40, $44, $4B, $4D, $5D, $61..$64, $70:
         other:
             return
