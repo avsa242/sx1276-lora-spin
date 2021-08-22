@@ -172,9 +172,26 @@ CON
     SYNCVALUE6                  = $2D
     SYNCVALUE7                  = $2E
     SYNCVALUE8                  = $2F
+
     PACKETCFG1                  = $30
+
     PACKETCFG2                  = $31
+    PACKETCFG2_MASK             = $7F
+        DATAMODE                = 6
+        IOHOMEON                = 5
+        IOHOMEPWRFRM            = 4
+        BEACONON                = 3
+        PAYLDLEN_MSB            = 0
+        DATAMODE_MASK           = (1 << DATAMODE) ^ PACKETCFG2_MASK
+        IOHOMEON_MASK           = (1 << IOHOMEON) ^ PACKETCFG2_MASK
+        IOHOMEPWRFRM_MASK       = (1 << IOHOMEPWRFRM) ^ PACKETCFG2_MASK
+        BEACONON_MASK           = (1 << BEACONON) ^ PACKETCFG2_MASK
+
     PAYLDLENGTH                 = $32
+    PKTCFG2_PAYLDLEN_MASK       = $7FFF         ' pseudo-mask: $31 and $32
+        PAYLDLEN_BITS           = %111_11111111 ' bits from both regs
+        PAYLDLEN_MASK           = PAYLDLEN_BITS ^ PKTCFG2_PAYLDLEN_MASK
+
     NODEADRS                    = $33
     BROADCASTADRS               = $34
     FIFOTHRESH                  = $35

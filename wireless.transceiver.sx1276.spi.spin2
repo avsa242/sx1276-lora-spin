@@ -835,15 +835,24 @@ PUB PayloadLenCfg(mode=-2): curr_mode
 
 PUB PayloadLength(len=-2): curr_len
 ' Set payload length, in bytes
-'   Valid values: 1..255
+'   Valid values: 1..255 (LoRa), 1..2047 (FSK/OOK)
 '   Any other value polls the chip and returns the current setting
-    case len
-        1..255:
-            writereg(core.LORA_PAYLDLENGTH, 1, @len)
-        other:
+    case modulation()
+        LORA:
+            if lookdown(len: 1..255)
+                writereg(core.LORA_PAYLDLENGTH, 1, @len)
+            else
+                curr_len := 0
+                readreg(core.LORA_PAYLDLENGTH, 1, @curr_len)
+                return
+        FSK, OOK:
             curr_len := 0
-            readreg(core.LORA_PAYLDLENGTH, 1, @curr_len)
-            return curr_len
+            readreg(core.PACKETCFG2, 2, @curr_len)
+            if lookdown(len: 1..2047)
+                len := ((curr_len & core.PAYLDLEN_MASK) | len)
+                writereg(core.PACKETCFG2, 2, @len)
+            else
+                return (curr_len & core.PAYLDLEN_BITS)
 
 PUB PayloadMaxLength(len=-2): curr_len
 ' Set payload maximum length, in bytes
@@ -1091,8 +1100,8 @@ PUB ValidPacketsReceived(): nr_pkts
 PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Read nr_bytes from device into ptr_buff
     case reg_nr
-        $00, $01..$03, $06..$2A, $2C, $2F, $39, $40, $42, $44, $4B, $4D, $5B, $5D,{
-}       $61..$64, $70:
+        $00, $01..$03, $06..$2A, $2C, $2F, $31, $32, $39, $40, $42, $44, $4B, {
+}       $4D, $5B, $5D, $61..$64, $70:
         other:
             return
 
@@ -1104,8 +1113,8 @@ PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes from ptr_buff to device
     case reg_nr
-        $00, $01..$03, $06..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $39, $40,{
-}       $44, $4B, $4D, $5D, $61..$64, $70:
+        $00, $01..$03, $06..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $31, {
+}       $32, $39, $40, $44, $4B, $4D, $5D, $61..$64, $70:
         other:
             return
 
