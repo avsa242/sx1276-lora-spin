@@ -824,6 +824,19 @@ PUB PacketRSSI{}: lrssi
     readreg(core#PKTRSSIVALUE, 1, @lrssi)
     return (-157 + lrssi)
 
+PUB RSSIThresh(thresh): curr_thr
+' Set threshold for triggering RSSI interrupt, in dBm
+'   Valid values: -127..0
+'   Any other value polls the chip and returns the current setting
+    case thresh
+        -127..0:
+            thresh := ||(thresh) * 2
+            writereg(core#RSSITHRESH, 1, @thresh)
+        other:
+            curr_thr := 0
+            readreg(core#RSSITHRESH, 1, @curr_thr)
+            return -(curr_thr / 2)
+
 PUB PacketSNR{}: snr
 ' Signal to noise ratio of last packet received, in dB (estimated)
     readreg(core#PKTSNRVALUE, 1, @snr)
@@ -1131,7 +1144,7 @@ PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes from ptr_buff to device
     case reg_nr
-        $00, $01..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $31, {
+        $00, $01..$0F, $10..$12, $16, $1D..$24, $26, $27, $2F, $31, {
 }       $32, $39, $40, $44, $4B, $4D, $5D, $61..$64, $70:
         other:
             return

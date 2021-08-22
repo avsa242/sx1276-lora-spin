@@ -743,8 +743,8 @@ PUB Modulation(mode=-2): curr_mode | lr_mode, opmode_orig
             return                              '   - no change, so bail out
         lr_mode := (curr_mode & core.MODEL_MASK & core.LORAMODEL_MASK)
         mode := (curr_mode & core.MODE_MASK & core.LORAMODE_MASK) | mode
-        writereg(core#OPMODE, 1, @lr_mode)
-        writereg(core#OPMODE, 1, @mode)
+        writereg(core.OPMODE, 1, @lr_mode)
+        writereg(core.OPMODE, 1, @mode)
     else
         mode := (curr_mode & core.MODE_MASK & core.MODTYPE_LORA_MASK) | mode
         writereg(core.OPMODE, 1, @mode)
@@ -920,6 +920,19 @@ PUB RSSI(): val
     val := 0
     readreg(core.LORA_RSSIVALUE, 1, @val)
     return (-157 + val)
+
+PUB RSSIThresh(thresh=-255): curr_thr
+' Set threshold for triggering RSSI interrupt, in dBm
+'   Valid values: -127..0
+'   Any other value polls the chip and returns the current setting
+    case thresh
+        -127..0:
+            thresh := abs(thresh) * 2
+            writereg(core.RSSITHRESH, 1, @thresh)
+        other:
+            curr_thr := 0
+            readreg(core.RSSITHRESH, 1, @curr_thr)
+            return -(curr_thr / 2)
 
 PUB RXBandwidth(bw=-2): curr_bw
 ' Set receive bandwidth, in Hz
@@ -1130,7 +1143,7 @@ PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
 PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes from ptr_buff to device
     case reg_nr
-        $00, $01..$0F, $11, $12, $16, $1D..$24, $26, $27, $2F, $31, {
+        $00, $01..$0F, $10..$12, $16, $1D..$24, $26, $27, $2F, $31, {
 }       $32, $39, $40, $44, $4B, $4D, $5D, $61..$64, $70:
         other:
             return
