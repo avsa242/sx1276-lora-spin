@@ -5,7 +5,7 @@
     Description: Low-level constants
     Copyright (c) 2021
     Started Oct 6, 2019
-    Updated May 18, 2021
+    Updated Aug 22, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -19,6 +19,10 @@ CON
     WRITE                       = 1 << 7        ' OR with reg_nr to signal write
 
     T_POR                       = 10_000        ' usec
+    T_RESACTIVE                 = 100
+    T_RES                       = 5_000
+
+    SPI_WR                      = 1 << 7        ' wnr bit (Write access)
 
 ' General/shared functionality
     FIFO                        = $00

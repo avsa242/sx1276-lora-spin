@@ -6,7 +6,7 @@
         (P2 version)
     Copyright (c) 2021
     Started Dec 12, 2020
-    Updated May 18, 2021
+    Updated Aug 22, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -25,6 +25,8 @@ CON
     MOSI_PIN        = 18
     MISO_PIN        = 19
     SCK_FREQ        = 10_000_000                ' max is 10_000_000
+    RESET_PIN       = 6                         ' use is recommended
+                                                '   (-1 to disable)
 ' --
 
 OBJ
@@ -92,11 +94,10 @@ PUB Setup()
     waitms(30)
     ser.clear()
     ser.strln(string("Serial terminal started"))
-    if lora.startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ)
+    if lora.startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN, SCK_FREQ)
         ser.strln(string("SX1276 driver started"))
     else
         ser.strln(string("SX1276 driver failed to start - halting"))
-        waitms(500)
         repeat
 
 DAT

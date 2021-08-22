@@ -6,7 +6,7 @@
         LoRa/FSK/OOK transceiver
     Copyright (c) 2021
     Started Oct 6, 2019
-    Updated May 18, 2021
+    Updated Aug 22, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -84,7 +84,7 @@ CON
 
 VAR
 
-    long _CS
+    long _CS, _RESET
     long _txsig_routing
 
 OBJ
@@ -93,20 +93,21 @@ OBJ
     core: "core.con.sx1276"
     time: "time"
     u64 : "math.unsigned64"
-    io  : "io"
 
 PUB Null{}
 ' This is not a top-level object
 
-PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN): status
+PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN): status
 ' Start using custom I/O settings
     if lookdown(CS_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and {
 }   lookdown(MOSI_PIN: 0..31) and lookdown(MISO_PIN: 0..31)
         if (status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, core#SPI_MODE))
             time.usleep(core#T_POR)
             _CS := CS_PIN
-            io.high(_CS)
-            io.output(_CS)
+            _RESET := RESET_PIN
+            outa[_CS] := 1
+            dira[_CS] := 1
+            reset{}
             if lookdown(deviceid{}: $11, $12)
                 return
     ' if this point is reached, something above failed
@@ -831,6 +832,15 @@ PUB PreambleLength(length):  curr_len
             readreg(core#LORA_PREAMBLEMSB, 2, @curr_len)
             return curr_len
 
+PUB Reset{}
+' Perform soft-reset
+    if lookdown(_RESET: 0..31)                  ' if a valid pin is set,
+        outa[_RESET] := 0                       ' pull NRESET low for 100uS,
+        dira[_RESET] := 1
+        time.usleep(core#T_RESACTIVE)
+        dira[_RESET] := 0                       '   then let it float
+        time.usleep(core#T_RES)                 ' wait for the chip to be ready
+
 PUB RSSI{}: val
 ' Current RSSI, in dBm
     val := 0
@@ -1038,10 +1048,10 @@ PRI readReg(reg_nr, nr_bytes, ptr_buff) | tmp
         other:
             return
 
-    io.low(_CS)
+    outa[_CS] := 0
     spi.wr_byte(reg_nr)
     spi.rdblock_msbf(ptr_buff, nr_bytes)
-    io.high(_CS)
+    outa[_CS] := 1
 
 PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
 ' Write nr_bytes from ptr_buff to device
@@ -1051,10 +1061,10 @@ PRI writeReg(reg_nr, nr_bytes, ptr_buff) | tmp
         other:
             return
 
-    io.low(_CS)
+    outa[_CS] := 0
     spi.wr_byte(reg_nr | core#WRITE)
     spi.wrblock_msbf(ptr_buff, nr_bytes)
-    io.high(_CS)
+    outa[_CS] := 1
 
 DAT
 {

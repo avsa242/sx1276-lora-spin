@@ -6,7 +6,7 @@
         LoRa/FSK/OOK transceiver (P2 version)
     Copyright (c) 2021
     Started Oct 6, 2019
-    Updated May 18, 2021
+    Updated Aug 22, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -84,7 +84,7 @@ CON
 
 VAR
 
-    long _CS
+    long _CS, _RESET
     long _txsig_routing
 
 OBJ
@@ -96,7 +96,7 @@ OBJ
 PUB Null()
 ' This is not a top-level object
 
-PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ=10_000_000): status
+PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN, SCK_FREQ=10_000_000): status
 ' Start using custom I/O settings
     if lookdown(CS_PIN: 0..63) and lookdown(SCK_PIN: 0..63) and {
 }   lookdown(MOSI_PIN: 0..63) and lookdown(MISO_PIN: 0..63) and {
@@ -105,7 +105,9 @@ PUB Startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ=10_000_000): status
 }       core.SPI_MODE))
             waitus(core.T_POR)
             _CS := CS_PIN
+            _RESET := RESET_PIN
             pinh(_CS)
+            reset()
             if lookdown(deviceid(): $11, $12)
                 return
     ' if this point is reached, something above failed
@@ -207,7 +209,7 @@ PUB AGCMode(state=-2): curr_state
 '   Valid values:
 '       TRUE(-1 or 1), *FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := $00
+    curr_state := 0
     readreg(core.MDMCFG3, 1, @curr_state)
     case abs(state)
         0, 1:
@@ -224,7 +226,6 @@ PUB CarrierFreq(freq=-2): curr_freq | opmode_orig
 '   Any other value polls the chip and returns the current setting
 '   NOTE: The default is 434_000_000
     opmode_orig := 0
-    curr_freq := 0
     case freq
         137_000_000..175_000_000, 410_000_000..525_000_000, 862_000_000..1_020_000_000:
             freq := u64.multdiv(freq, FPSCALE, FSTEP)
@@ -830,6 +831,14 @@ PUB PreambleLength(length=-2):  curr_len
             curr_len := 0
             readreg(core.LORA_PREAMBLEMSB, 2, @curr_len)
             return curr_len
+
+PUB Reset()
+' Perform soft-reset
+    if lookdown(_RESET: 0..63)                  ' if a valid pin is set,
+        pinl(_RESET)                            ' pull NRESET low for 100uS,
+        waitus(core.T_RESACTIVE)
+        pinf(_RESET)                            '   then let it float
+        waitus(core.T_RES)                      ' wait for the chip to be ready
 
 PUB RSSI(): val
 ' Current RSSI, in dBm

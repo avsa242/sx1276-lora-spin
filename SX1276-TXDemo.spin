@@ -5,7 +5,7 @@
     Description: Transmit demo of the SX1276 driver (LoRa mode)
     Copyright (c) 2021
     Started Dec 12, 2020
-    Updated May 18, 2021
+    Updated Aug 22, 2021
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -19,10 +19,12 @@ CON
     SER_BAUD        = 115_200
     LED             = cfg#LED1
 
-    CS_PIN          = 0
-    SCK_PIN         = 1
-    MOSI_PIN        = 2
-    MISO_PIN        = 3
+    CS_PIN          = 5
+    SCK_PIN         = 2
+    MOSI_PIN        = 3
+    MISO_PIN        = 4
+    RESET_PIN       = 6                         ' use is recommended
+                                                '   (-1 to disable)
 ' --
 
 OBJ
@@ -91,7 +93,7 @@ PUB Setup{}
     time.msleep(30)
     ser.clear{}
     ser.strln(string("Serial terminal started"))
-    if lora.startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN)
+    if lora.startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN)
         ser.strln(string("SX1276 driver started"))
     else
         ser.strln(string("SX1276 driver failed to start - halting"))
