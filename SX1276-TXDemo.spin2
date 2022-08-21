@@ -6,7 +6,7 @@
         (P2 version)
     Copyright (c) 2022
     Started Dec 12, 2020
-    Updated Aug 20, 2022
+    Updated Aug 21, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -45,7 +45,7 @@ PUB Main() | count
     setup()
 
     ser.position(0, 3)
-    ser.strln(string("Transmit mode"))
+    ser.strln(@"Transmit mode")
 
 ' -- TX/RX settings
     lora.presetlora()                           ' factory defaults + LoRa mode
@@ -68,7 +68,7 @@ PUB Main() | count
         bytefill(@_buffer, 0, 256)              ' clear temp TX buffer
 
         ' payload is the string 'TEST' with hexadecimal counter after
-        str.sprintf(@_buffer, string("TEST%04.4x"), count)
+        str.sprintf1(@_buffer, @"TEST%04.4x", count)
         lora.opmode(lora.STDBY)
 
         ' make sure the data is placed at the start of the TX FIFO
@@ -82,7 +82,7 @@ PUB Main() | count
 
         count++
         ser.position(0, 5)
-        ser.str(string("Sending: "))
+        ser.str(@"Sending: ")
         ser.str(@_buffer)
         waitms(5000)                            ' wait in between packets
                                                 ' (don't abuse the airwaves)
@@ -92,11 +92,11 @@ PUB Setup()
     ser.start(SER_BAUD)
     waitms(30)
     ser.clear()
-    ser.strln(string("Serial terminal started"))
+    ser.strln(@"Serial terminal started")
     if lora.startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN, SCK_FREQ)
-        ser.strln(string("SX1276 driver started"))
+        ser.strln(@"SX1276 driver started")
     else
-        ser.strln(string("SX1276 driver failed to start - halting"))
+        ser.strln(@"SX1276 driver failed to start - halting")
         repeat
 
 DAT
