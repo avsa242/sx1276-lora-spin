@@ -135,76 +135,76 @@ PUB preset_lora{}
     lna_gain(0)
     low_freq_mode(true)
     preamble_len(8)
-    rx_bandw(125_000)
+    rx_bw(125_000)
     rx_timeout(100)
-    spread_factor(7)
-    sync_word($12)
+    spread_fact(7)
+    syncwd($12)
 
 PUB preset_dr0{}
 ' Physical bitrate (Rb) 980
     preset_lora{}
-    spread_factor(10)
-'    rx_bandw(125_000)
+    spread_fact(10)
+'    rx_bw(125_000)
 
 PUB preset_dr1{}
 ' Physical bitrate (Rb) 1760
     preset_lora{}
-    spread_factor(9)
-'    rx_bandw(125_000)
+    spread_fact(9)
+'    rx_bw(125_000)
 
 PUB preset_dr2{}
 ' Physical bitrate (Rb) 3125
     preset_lora{}
-    spread_factor(8)
-'    rx_bandw(125_000)
+    spread_fact(8)
+'    rx_bw(125_000)
 
 PUB preset_dr3{}
 ' Physical bitrate (Rb) 5470
     preset_lora{}
-'    spread_factor(7)
-'    rx_bandw(125_000)
+'    spread_fact(7)
+'    rx_bw(125_000)
 
 PUB preset_dr4{}
 ' Physical bitrate (Rb) 12500
     preset_lora{}
-    spread_factor(8)
-'    rx_bandw(125_000)
+    spread_fact(8)
+'    rx_bw(125_000)
 
 PUB preset_dr8{}
 ' Physical bitrate (Rb) 980
     preset_lora{}
-    spread_factor(12)
-    rx_bandw(500_000)
+    spread_fact(12)
+    rx_bw(500_000)
 
 PUB preset_dr9{}
 ' Physical bitrate (Rb) 1760
     preset_lora{}
-    spread_factor(11)
-    rx_bandw(500_000)
+    spread_fact(11)
+    rx_bw(500_000)
 
 PUB preset_dr10{}
 ' Physical bitrate (Rb) 3900
     preset_lora{}
-    spread_factor(10)
-    rx_bandw(500_000)
+    spread_fact(10)
+    rx_bw(500_000)
 
 PUB preset_dr11{}
 ' Physical bitrate (Rb) 7000
     preset_lora{}
-    spread_factor(9)
-    rx_bandw(500_000)
+    spread_fact(9)
+    rx_bw(500_000)
 
 PUB preset_dr12{}
 '  Physical bitrate (Rb) 12500
     preset_lora{}
-    spread_factor(8)
-    rx_bandw(500_000)
+    spread_fact(8)
+    rx_bw(500_000)
 
 PUB preset_dr13{}
 ' Physical bitrate (Rb) 21900
     preset_lora{}
-'    spread_factor(7)
-    rx_bandw(500_000)
+'    spread_fact(7)
+    rx_bw(500_000)
 
 PUB agc_mode(state): curr_state
 ' Enable AGC
@@ -539,8 +539,8 @@ PUB interrupt{}: mask
     mask := 0
     readreg(core#IRQFLAGS, 1, @mask)
 
-PUB int_mask{}: mask
-' Get interrupt mask
+PUB int_mask(mask): curr_mask
+' Set interrupt mask
 '   Bits: 7..0
 '       7: Receive timeout
 '       6: Receive done
@@ -550,25 +550,16 @@ PUB int_mask{}: mask
 '       2: CAD done
 '       1: FHSS change channel
 '       0: CAD detected
-    mask := 0
-    readreg(core#IRQFLAGS_MASK, 1, @mask)
-    return (mask ^ $FF)
-
-PUB int_set_mask(mask)
-' Set interrupt mask
-'   Valid values:
-'       Bits: 7..0
-'           7: Receive timeout
-'           6: Receive done
-'           5: Payload CRC error
-'           4: Valid header
-'           3: Transmit done
-'           2: CAD done
-'           1: FHSS change channel
-'           0: CAD detected
-    { flip bits so '1' enables interrupt, '0' clears }
-    mask := ((mask & $ff) ^ $ff)
-    writereg(core#IRQFLAGS_MASK, 1, @mask)
+'   Any other value polls the chip and returns the current setting
+    case mask
+        %0000_0000..%1111_1111:
+            { flip bits so '1' enables interrupt, '0' clears }
+            mask := ((mask & $ff) ^ $ff)
+            writereg(core#IRQFLAGS_MASK, 1, @mask)
+        other:
+            curr_mask := 0
+            readreg(core#IRQFLAGS_MASK, 1, @curr_mask)
+            return (curr_mask ^ $FF)
 
 PUB last_hdr_had_crc{}: flag
 ' Flag indicating last header was received with CRC on
@@ -885,7 +876,7 @@ PUB rssi_int_thresh(thresh): curr_thr
             readreg(core#RSSITHRESH, 1, @curr_thr)
             return -(curr_thr / 2)
 
-PUB rx_bandw(bw): curr_bw
+PUB rx_bw(bw): curr_bw
 ' Set receive bandwidth, in Hz
 '   Valid values: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, *125_000, 250_000, 500_000
 '   Any other value polls the chip and returns the current setting
@@ -956,7 +947,7 @@ PUB sleep{}
 ' Power down chip
     opmode(SLEEPMODE)
 
-PUB spread_factor(sf): curr_sf
+PUB spread_fact(sf): curr_sf
 ' Set spreading factor
 '   Valid values: 6, *7, 8, 9, 10, 11, 12
 '   Any other value polls the chip and returns the current setting
@@ -971,7 +962,7 @@ PUB spread_factor(sf): curr_sf
     sf := ((curr_sf & core#SPREADFACT_MASK) | sf) & core#MDMCFG2_MASK
     writereg(core#MDMCFG2, 1, @sf)
 
-PUB sync_word(val): curr_val
+PUB syncwd(val): curr_val
 ' Set LoRa Syncword
 '   Valid values: $00..$FF
 '   Any other value polls the chip and returns the current setting
