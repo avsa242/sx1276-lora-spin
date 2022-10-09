@@ -5,7 +5,7 @@
     Description: Transmit demo of the SX1276 driver (LoRa mode)
     Copyright (c) 2022
     Started Dec 12, 2020
-    Updated Aug 20, 2022
+    Updated Oct 9, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -19,12 +19,11 @@ CON
     SER_BAUD        = 115_200
     LED             = cfg#LED1
 
-    CS_PIN          = 5
-    SCK_PIN         = 2
-    MOSI_PIN        = 3
-    MISO_PIN        = 4
-    RESET_PIN       = 6                         ' use is recommended
-                                                '   (-1 to disable)
+    CS_PIN          = 0
+    SCK_PIN         = 1
+    MOSI_PIN        = 2
+    MISO_PIN        = 3
+    RESET_PIN       = 4                         ' optional (-1 to disable)
 ' --
 
 OBJ
@@ -39,7 +38,7 @@ VAR
 
     byte _buffer[256]
 
-PUB Main{} | count
+PUB main{} | count
 
     setup{}
 
@@ -47,37 +46,37 @@ PUB Main{} | count
     ser.strln(string("Transmit mode"))
 
 ' -- TX/RX settings
-    lora.presetlora{}                           ' factory defaults + LoRa mode
+    lora.preset_lora{}                          ' factory defaults + LoRa mode
     lora.channel(0)                             ' US 902.3MHz + (chan# * 200kHz)
-    lora.intclear(lora#INT_ALL)                 ' clear _all_ interrupts
-    lora.fifotxbaseptr($00)                     ' use the whole 256-byte FIFO
+    lora.int_clr(lora#INT_ALL)                  ' clear _all_ interrupts
+    lora.fifo_tx_base_ptr($00)                  ' use the whole 256-byte FIFO
                                                 '   for TX
-    lora.payloadlength(8)                       ' the test packets are
+    lora.payld_len(8)                           ' the test packets are
 ' --                                            '   8 bytes
 
 ' -- TX-specific settings
-    lora.txsigrouting(lora#PABOOST)             ' RFO, PABOOST (board-depend.)
-    lora.txpower(5)                             ' -1..14 (RFO) 5..23 (PABOOST)
-    lora.intmask(lora#TX_DONE)                  ' interrupt on transmit done
-    lora.txcontinuous(lora#TXMODE_NORMAL)
+    lora.tx_sig_routing(lora#PABOOST)           ' RFO, PABOOST (board-dependent)
+    lora.tx_pwr(5)                              ' -1..14 (RFO) 5..23 (PABOOST)
+    lora.int_set_mask(lora#INT_TX_DONE)         ' interrupt on transmit done
+    lora.tx_cont(lora#TXMODE_NORMAL)
 ' --
 
     count := 0
     repeat
         bytefill(@_buffer, 0, 256)              ' clear temp TX buffer
 
-        ' payload is the string 'TEST' with hexadecimal counter after
+        { payload is the string 'TEST' with hexadecimal counter after }
         str.sprintf1(@_buffer, string("TEST%04.4x"), count)
         lora.opmode(lora#STDBY)
 
-        ' make sure the data is placed at the start of the TX FIFO
-        lora.fifoaddrpointer($00)
-        lora.txpayload(8, @_buffer)             ' queue the data
-        lora.txmode{}                           ' finally, transmit it
+        { make sure the data is placed at the start of the TX FIFO }
+        lora.fifo_addr_ptr($00)
+        lora.tx_payld(8, @_buffer)              ' queue the data
+        lora.tx_mode{}                          ' finally, transmit it
 
-        ' wait until sending is complete, then clear the interrupt
-        repeat until lora.interrupt{} & lora#TX_DONE
-        lora.intclear(lora#TX_DONE)
+        { wait until sending is complete, then clear the interrupt }
+        repeat until (lora.interrupt{} & lora#INT_TX_DONE)
+        lora.int_clr(lora#INT_TX_DONE)
 
         count++
         ser.position(0, 5)
@@ -86,7 +85,7 @@ PUB Main{} | count
         time.msleep(5000)                       ' wait in between packets
                                                 ' (don't abuse the airwaves)
 
-PUB Setup{}
+PUB setup{}
 
     ser.start(SER_BAUD)
     time.msleep(30)
