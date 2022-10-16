@@ -5,7 +5,7 @@
     Description: Receive demo of the SX1276 driver (LoRa mode) (P2 version)
     Copyright (c) 2022
     Started Dec 12, 2020
-    Updated Oct 9, 2022
+    Updated Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -29,7 +29,7 @@ CON
 
 OBJ
 
-    cfg     : "core.con.boardcfg.p2eval"
+    cfg     : "boardcfg.p2eval"
     ser     : "com.serial.terminal.ansi"
     lora    : "wireless.transceiver.sx1276-lora"
 
@@ -55,7 +55,7 @@ PUB main()
 
 ' -- RX-specific settings
     lora.rx_mode()
-    lora.int_set_mask(lora.INT_RX_DONE)         ' interrupt when receive done
+    lora.int_mask(lora.INT_RX_DONE)         ' interrupt when receive done
 
     { change these if having difficulty with reception }
     lora.lna_gain(0)                            ' 0, -6, -12, -24, -26, -48 dB

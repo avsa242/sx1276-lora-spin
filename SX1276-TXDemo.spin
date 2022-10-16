@@ -5,7 +5,7 @@
     Description: Transmit demo of the SX1276 driver (LoRa mode)
     Copyright (c) 2022
     Started Dec 12, 2020
-    Updated Oct 9, 2022
+    Updated Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -28,7 +28,7 @@ CON
 
 OBJ
 
-    cfg : "core.con.boardcfg.flip"
+    cfg : "boardcfg.flip"
     ser : "com.serial.terminal.ansi"
     time: "time"
     lora: "wireless.transceiver.sx1276-lora"
@@ -57,7 +57,7 @@ PUB main{} | count
 ' -- TX-specific settings
     lora.tx_sig_routing(lora#PABOOST)           ' RFO, PABOOST (board-dependent)
     lora.tx_pwr(5)                              ' -1..14 (RFO) 5..23 (PABOOST)
-    lora.int_set_mask(lora#INT_TX_DONE)         ' interrupt on transmit done
+    lora.int_mask(lora#INT_TX_DONE)         ' interrupt on transmit done
     lora.tx_cont(lora#TXMODE_NORMAL)
 ' --
 

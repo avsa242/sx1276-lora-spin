@@ -5,7 +5,7 @@
     Description: Driver for the SEMTECH SX1276 LoRa/FSK/OOK transceiver (LoRa mode)
     Copyright (c) 2022
     Started Oct 6, 2019
-    Updated Oct 9, 2022
+    Updated Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -89,7 +89,7 @@ VAR
 
 OBJ
 
-    spi : "com.spi.4w"
+    spi : "com.spi.1mhz"
     core: "core.con.sx1276"
     time: "time"
     u64 : "math.unsigned64"

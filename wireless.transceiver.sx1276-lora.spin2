@@ -5,7 +5,7 @@
     Description: Driver for the SEMTECH SX1276 LoRa/FSK/OOK transceiver (LoRa mode; P2 version)
     Copyright (c) 2022
     Started Oct 6, 2019
-    Updated Oct 9, 2022
+    Updated Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -89,7 +89,7 @@ VAR
 
 OBJ
 
-    spi : "com.spi"
+    spi : "com.spi.25mhz"
     core: "core.con.sx1276"
     u64 : "math.unsigned64"
 
@@ -539,8 +539,8 @@ PUB interrupt(): mask
     mask := 0
     readreg(core.IRQFLAGS, 1, @mask)
 
-PUB int_mask{}: mask
-' Get interrupt mask
+PUB int_mask(mask=-2): curr_mask
+' Set interrupt mask
 '   Bits: 7..0
 '       7: Receive timeout
 '       6: Receive done
@@ -550,25 +550,16 @@ PUB int_mask{}: mask
 '       2: CAD done
 '       1: FHSS change channel
 '       0: CAD detected
-    mask := 0
-    readreg(core.IRQFLAGS_MASK, 1, @mask)
-    return (mask ^ $FF)
-
-PUB int_set_mask(mask)
-' Set interrupt mask
-'   Valid values:
-'       Bits: 7..0
-'           7: Receive timeout
-'           6: Receive done
-'           5: Payload CRC error
-'           4: Valid header
-'           3: Transmit done
-'           2: CAD done
-'           1: FHSS change channel
-'           0: CAD detected
-    { flip bits so '1' enables interrupt, '0' clears }
-    mask := ((mask & $ff) ^ $ff)
-    writereg(core.IRQFLAGS_MASK, 1, @mask)
+'   Any other value polls the chip and returns the current setting
+    case mask
+        %0000_0000..%1111_1111:
+            { flip bits so '1' enables interrupt, '0' clears }
+            mask := ((mask & $ff) ^ $ff)
+            writereg(core.IRQFLAGS_MASK, 1, @mask)
+        other:
+            curr_mask := 0
+            readreg(core.IRQFLAGS_MASK, 1, @curr_mask)
+            return (curr_mask ^ $FF)
 
 PUB last_hdr_had_crc(): flag
 ' Flag indicating last header was received with CRC on
