@@ -99,7 +99,7 @@ PUB startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN, SCK_FREQ=10_000_000):
 ' Start using custom I/O settings
     if (lookdown(CS_PIN: 0..63) and lookdown(SCK_PIN: 0..63) and lookdown(MOSI_PIN: 0..63) {
 }      and lookdown(MISO_PIN: 0..63) and SCK_FREQ <= core.SCK_MAX_FREQ)
-        if (status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, SCK_FREQ, core.SPI_MODE))
+        if (status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, core.SPI_MODE, SCK_FREQ))
             waitus(core.T_POR)
             _CS := CS_PIN
             _RESET := RESET_PIN
