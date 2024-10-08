@@ -1,97 +1,92 @@
 {
-    --------------------------------------------
-    Filename: SX1276-RXDemo.spin
-    Author: Jesse Burt
-    Description: Receive demo of the SX1276 driver (LoRa mode)
-    Copyright (c) 2022
-    Started Dec 12, 2020
-    Updated Nov 13, 2022
-    See end of file for terms of use.
-    --------------------------------------------
+----------------------------------------------------------------------------------------------------
+    Filename:       SX1276-RXDemo.spin
+    Description:    Demo of the SX1276 driver
+        * Receiver (LoRa mode)
+    Author:         Jesse Burt
+    Started:        Dec 12, 2020
+    Updated:        Oct 8, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
 
 CON
 
-    _clkmode        = cfg#_clkmode
-    _xinfreq        = cfg#_xinfreq
+    _clkmode = xtal1+pll16x 
+    _xinfreq = 5_000_000
 
-' -- User-modifiable constants
-    SER_BAUD        = 115_200
-    LED             = cfg#LED1
-
-    CS_PIN          = 0
-    SCK_PIN         = 1
-    MOSI_PIN        = 2
-    MISO_PIN        = 3
-    RESET_PIN       = 4                         ' optional (-1 to disable)
-' --
 
 OBJ
 
-    cfg     : "boardcfg.flip"
-    ser     : "com.serial.terminal.ansi"
-    time    : "time"
-    lora    : "wireless.transceiver.sx1276-lora"
+    time:   "time"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
+    radio:  "wireless.transceiver.sx1276-lora" | CS=0, SCK=1, MOSI=2, MISO=3, RST=4, ...
+                                                SPI_FREQ=1_000_000
+
 
 VAR
 
-    byte _buffer[256]
+    byte _buffer[radio.PAYLD_LEN_MAX+1]         ' 255 + 1 (nul termination for strings)
 
-PUB main{}
 
-    setup{}
+PUB main()
+
+    setup()
 
     ser.pos_xy(0, 3)
-    ser.strln(string("Receive mode"))
+    ser.strln(@"Receive mode")
 
 ' -- TX/RX settings
-    lora.preset_lora{}                          ' factory defaults + LoRa mode
-    lora.channel(0)                             ' US 902.3MHz + (chan# * 200kHz)
-    lora.int_clear(lora#INT_ALL)                  ' clear _all_ interrupts
-    lora.fifo_rx_base_ptr($00)                  ' use the whole 256-byte FIFO
+    radio.preset_lora()                         ' factory defaults + LoRa mode
+    radio.channel(0)                            ' US 902.3MHz + (chan# * 200kHz)
+    radio.int_clear(radio.INT_ALL)              ' clear _all_ interrupts
+    radio.fifo_rx_base_ptr($00)                 ' use the whole 256-byte FIFO
                                                 '   for RX
-    lora.payld_len(8)                           ' the expected test packets are
+    radio.payld_len(8)                          ' the expected test packets are
 ' --                                            '   8 bytes
 
 ' -- RX-specific settings
-    lora.rx_mode{}
-    lora.int_mask(lora#INT_RX_DONE)         ' interrupt when receive done
+    radio.rx_mode()
+    radio.int_mask(radio.INT_RX_DONE)           ' interrupt when receive done
 
     { change these if having difficulty with reception }
-    lora.lna_gain(0)                            ' 0, -6, -12, -24, -26, -48 dB
-    lora.agc_mode(false)                        ' true, false (lna_gain() is
-                                                ' ignored if true)
+    radio.lna_gain(0)                           ' 0, -6, -12, -24, -26, -48 dB
+    radio.agc_mode(false)                       ' true, false (lna_gain() is ignored if true)
 ' --
 
     repeat
         { wait for the radio to finish receiving, then clear the interrupt }
-        repeat until (lora.interrupt{} & lora#INT_RX_DONE)
-        lora.int_clear(lora#INT_RX_DONE)
+        repeat
+        until (radio.interrupt() & radio.INT_RX_DONE)
+        radio.int_clear(radio.INT_RX_DONE)
 
         { get the payload from the radio }
-        lora.fifo_addr_ptr(lora.fifo_rx_current_addr{})
-        lora.rx_payld(8, @_buffer)
+        radio.fifo_addr_ptr( radio.fifo_rx_current_addr() )
+        radio.rx_payld(8, @_buffer)
 
         { display the received payload on the terminal }
         ser.pos_xy(0, 5)
-        ser.str(string("Received: "))
-        ser.str(@_buffer)
-    
-PUB setup{}
+        ser.puts(@"Received: ")
+        ser.puts(@_buffer)
 
-    ser.start(SER_BAUD)
+    
+PUB setup()
+
+    ser.start()
     time.msleep(30)
-    ser.clear{}
-    ser.strln(string("Serial terminal started"))
-    if lora.startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN)
-        ser.str(string("SX1276 driver started"))
+    ser.clear()
+    ser.strln(@"Serial terminal started")
+
+    if ( radio.start() )
+        ser.strln(@"SX1276 driver started")
     else
-        ser.strln(string("SX1276 driver failed to start - halting"))
+        ser.strln(@"SX1276 driver failed to start - halting")
         repeat
+
 
 DAT
 {
-Copyright 2022 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

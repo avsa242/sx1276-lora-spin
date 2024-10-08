@@ -1,13 +1,12 @@
 {
-    --------------------------------------------
-    Filename: core.con.sx1276.spin
-    Author: Jesse Burt
-    Description: SX1276-specific constants
-    Copyright (c) 2021
-    Started Oct 6, 2019
-    Updated Aug 22, 2021
-    See end of file for terms of use.
-    --------------------------------------------
+----------------------------------------------------------------------------------------------------
+    Filename:       core.con.sx1276.spin
+    Description:    SX1276-specific constants
+    Author:         Jesse Burt
+    Started:        Oct 6, 2019
+    Updated:        Oct 8, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
 
 CON
@@ -304,12 +303,14 @@ CON
     INVERTIQ2                   = $3B
 ' $3C..$3F - RESERVED
 
-PUB null{}
+
+PUB null()
 ' This is not a top-level object
+
 
 DAT
 {
-Copyright 2022 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

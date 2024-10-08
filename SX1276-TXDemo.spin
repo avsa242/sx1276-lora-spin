@@ -1,64 +1,54 @@
 {
-    --------------------------------------------
-    Filename: SX1276-TXDemo.spin
-    Author: Jesse Burt
-    Description: Transmit demo of the SX1276 driver (LoRa mode)
-    Copyright (c) 2022
-    Started Dec 12, 2020
-    Updated Nov 13, 2022
-    See end of file for terms of use.
-    --------------------------------------------
+----------------------------------------------------------------------------------------------------
+    Filename:       SX1276-TXDemo.spin
+    Description:    Demo of the SX1276 driver
+        * Transmitter (LoRa mode)
+    Author:         Jesse Burt
+    Started:        Dec 12, 2020
+    Updated:        Oct 8, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
 
 CON
 
-    _clkmode        = cfg#_clkmode
-    _xinfreq        = cfg#_xinfreq
-
-' -- User-modifiable constants
-    SER_BAUD        = 115_200
-    LED             = cfg#LED1
-
-    CS_PIN          = 0
-    SCK_PIN         = 1
-    MOSI_PIN        = 2
-    MISO_PIN        = 3
-    RESET_PIN       = 4                         ' optional (-1 to disable)
-' --
+    _clkmode = xtal1+pll16x
+    _xinfreq = 5_000_000
 
 OBJ
 
-    cfg : "boardcfg.flip"
-    ser : "com.serial.terminal.ansi"
-    time: "time"
-    lora: "wireless.transceiver.sx1276-lora"
-    str : "string"
+    time:   "time"
+    str:    "string"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
+    radio:  "wireless.transceiver.sx1276-lora" | CS=0, SCK=1, MOSI=2, MISO=3, RST=4, ...
+                                                SPI_FREQ=1_000_000
 
 VAR
 
-    byte _buffer[256]
+    byte _buffer[radio.PAYLD_LEN_MAX+1]         ' 255 + 1 (nul termination for strings)
 
-PUB main{} | count
 
-    setup{}
+PUB main() | count
+
+    setup()
 
     ser.pos_xy(0, 3)
-    ser.strln(string("Transmit mode"))
+    ser.strln(@"Transmit mode")
 
 ' -- TX/RX settings
-    lora.preset_lora{}                          ' factory defaults + LoRa mode
-    lora.channel(0)                             ' US 902.3MHz + (chan# * 200kHz)
-    lora.int_clear(lora#INT_ALL)                  ' clear _all_ interrupts
-    lora.fifo_tx_base_ptr($00)                  ' use the whole 256-byte FIFO
+    radio.preset_lora()                         ' factory defaults + LoRa mode
+    radio.channel(0)                            ' US 902.3MHz + (chan# * 200kHz)
+    radio.int_clear(radio.INT_ALL)              ' clear _all_ interrupts
+    radio.fifo_tx_base_ptr($00)                 ' use the whole 256-byte FIFO
                                                 '   for TX
-    lora.payld_len(8)                           ' the test packets are
+    radio.payld_len(8)                          ' the test packets are
 ' --                                            '   8 bytes
 
 ' -- TX-specific settings
-    lora.tx_sig_routing(lora#PABOOST)           ' RFO, PABOOST (board-dependent)
-    lora.tx_pwr(5)                              ' -1..14 (RFO) 5..23 (PABOOST)
-    lora.int_mask(lora#INT_TX_DONE)             ' set interrupt on transmit done
-    lora.tx_cont(lora#TXMODE_NORMAL)
+    radio.tx_sig_routing(radio.PABOOST)         ' RFO, PABOOST (board-dependent)
+    radio.tx_pwr(5)                             ' -1..14 (RFO) 5..23 (PABOOST)
+    radio.int_mask(radio.INT_TX_DONE)           ' set interrupt on transmit done
+    radio.tx_cont(radio.TXMODE_NORMAL)
 ' --
 
     count := 0
@@ -66,40 +56,43 @@ PUB main{} | count
         bytefill(@_buffer, 0, 256)              ' clear temp TX buffer
 
         { payload is the string 'TEST' with hexadecimal counter after }
-        str.sprintf1(@_buffer, string("TEST%04.4x"), count)
-        lora.opmode(lora#STDBY)
+        str.sprintf1(@_buffer, @"TEST%04.4x", count)
+        radio.opmode(radio.STDBY)
 
         { make sure the data is placed at the start of the TX FIFO }
-        lora.fifo_addr_ptr($00)
-        lora.tx_payld(8, @_buffer)              ' queue the data
-        lora.tx_mode{}                          ' finally, transmit it
+        radio.fifo_addr_ptr($00)
+        radio.tx_payld(8, @_buffer)             ' queue the data
+        radio.tx_mode()                         ' finally, transmit it
 
         { wait until sending is complete, then clear the interrupt }
-        repeat until (lora.interrupt{} & lora#INT_TX_DONE)
-        lora.int_clear(lora#INT_TX_DONE)
+        repeat until (radio.interrupt() & radio.INT_TX_DONE)
+        radio.int_clear(radio.INT_TX_DONE)
 
         count++
         ser.pos_xy(0, 5)
-        ser.str(string("Sending: "))
+        ser.str(@"Sending: ")
         ser.str(@_buffer)
         time.msleep(5000)                       ' wait in between packets
                                                 ' (don't abuse the airwaves)
 
-PUB setup{}
 
-    ser.start(SER_BAUD)
+PUB setup()
+
+    ser.start()
     time.msleep(30)
-    ser.clear{}
-    ser.strln(string("Serial terminal started"))
-    if lora.startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN)
-        ser.strln(string("SX1276 driver started"))
+    ser.clear()
+    ser.strln(@"Serial terminal started")
+
+    if ( radio.start() )
+        ser.strln(@"SX1276 driver started")
     else
-        ser.strln(string("SX1276 driver failed to start - halting"))
+        ser.strln(@"SX1276 driver failed to start - halting")
         repeat
+
 
 DAT
 {
-Copyright 2022 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
