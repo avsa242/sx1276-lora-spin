@@ -1,5 +1,5 @@
 # sx1276-lora-spin
--------------
+------------------
 
 This is a P8X32A/Propeller, P2X8C4M64P/Propeller 2 driver object for the Semtech SX1276 LoRa/FSK/OOK transceiver (LoRa mode only)
 
@@ -42,7 +42,6 @@ P2/SPIN2:
 
 ## Limitations
 
-* Channel() method is currently limited to US band plan (due to local hardware on-hand)
 * Doesn't support the SX1276's FSK/OOK packet radio mode - see sx1276-spin
 * Doesn't support FHSS
 

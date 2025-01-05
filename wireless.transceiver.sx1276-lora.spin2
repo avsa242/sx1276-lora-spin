@@ -4,7 +4,7 @@
     Description:    Driver for the SEMTECH SX1276 LoRa/FSK/OOK transceiver (LoRa mode)
     Author:         Jesse Burt
     Started:        Oct 6, 2019
-    Updated:        Oct 8, 2024
+    Updated:        Jan 5, 2025
     Copyright (c) 2024 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
@@ -27,6 +27,11 @@ CON
     FSTEP                   = 61_0351562        ' (FXOSC / TWO_19) * FPSCALE
 
     PAYLD_LEN_MAX           = 255
+
+    ' regions
+    USA                     = 0                 ' US 915MHz band
+    EU868                   = 1                 ' EU 868MHz band
+
 
 ' Modulation modes
     FSK                     = 0
@@ -97,6 +102,7 @@ VAR
 
     long _CS, _RESET
     long _txsig_routing
+    byte _region
 
 
 OBJ
@@ -129,6 +135,7 @@ PUB startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN, SCK_FREQ): status
             _RESET := RESET_PIN
             pinh(_CS)
             reset()
+            _region := USA
             if ( lookdown(dev_id(): $11, $12) )
                 return
     ' if this point is reached, something above failed
@@ -281,14 +288,29 @@ PUB channel(number=-2): curr_chan
 ' Set LoRa uplink channel
 '   Valid values: 0..63
 '   Any other value polls the chip and returns the current setting
-'   NOTE: US band plan (915MHz)
-    case number
-        0..63:
-            number := 902_300_000 + (200_000 * number)
-            carrier_freq(number)
-        other:
-            curr_chan := carrier_freq()
-            return (curr_chan - 902_300_000) / 200_000
+'   NOTE: Actual effective frequency depends on currently set band plan/region
+    case _region
+        USA:
+            case number
+                0..63:
+                    number := 902_300_000 + (200_000 * number)
+                    carrier_freq(number)
+                other:
+                    curr_chan := carrier_freq()
+                    return (curr_chan - 902_300_000) / 200_000
+        EU868:
+            case number
+                0..9:
+                    number := lookupz(number:   868_100_000, 868_300_000, 868_500_000, ...
+                                                867_100_000, 867_300_000, 867_500_000, ...
+                                                867_700_000, 867_900_000, 868_800_000, ...
+                                                869_525_000)
+                other:
+                    curr_chan := carrier_freq()
+                    return lookdownz(curr_chan: 868_100_000, 868_300_000, 868_500_000, ...
+                                                867_100_000, 867_300_000, 867_500_000, ...
+                                                867_700_000, 867_900_000, 868_800_000, ...
+                                                869_525_000)
 
 
 PUB clk_out(divisor=-2): curr_div
@@ -914,6 +936,11 @@ PUB preamble_len(length=-2):  curr_len
             return curr_len
 
 
+PUB region(): r
+' Get the currently set region of operation
+    return _region
+
+
 PUB reset()
 ' Perform soft-reset
     if ( lookdown(_RESET: 0..63) )                  ' if a valid pin is set,
@@ -1008,6 +1035,14 @@ PUB rx_timeout(symbols=-2): curr_symb | symbtimeout_msb, symbtimeout_lsb
             writereg(core.SYMBTIMEOUTLSB, 1, @symbtimeout_lsb)
         other:
             return curr_symb & core.SYMBTIMEOUT_BITS
+
+
+PUB set_region(r)
+' Set region of operation
+'   r:
+'       USA (0):    United States
+'       EU868 (1):  Europe, 868MHz
+    _region := r
 
 
 PUB signal_detected(): flag
@@ -1184,7 +1219,7 @@ PRI writereg(reg_nr, nr_bytes, ptr_buff) | tmp
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2025 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
