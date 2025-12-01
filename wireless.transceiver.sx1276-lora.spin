@@ -4,8 +4,8 @@
     Description:    Driver for the SEMTECH SX1276 LoRa/FSK/OOK transceiver (LoRa mode)
     Author:         Jesse Burt
     Started:        Oct 6, 2019
-    Updated:        Oct 8, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Dec 1, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -17,7 +17,7 @@ CON
     MOSI                    = 2
     MISO                    = 3
     RST                     = 0
-    SPI_FREQ                = 1_000_000
+    SPI_FREQ                = 1_000_000         ' max 10MHz
 
 
     FXOSC                   = 32_000_000
@@ -118,11 +118,14 @@ PUB start(): status
 
 PUB startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN): status
 ' Start the driver with custom I/O settings
-'   CS_PIN: 0..31
-'   SCK_PIN: 0..31
-'   MOSI_PIN: 0..31
-'   MISO_PIN: 0..31
-'   RESET_PIN: 0..31
+'   CS_PIN:     0..31
+'   SCK_PIN:    0..31
+'   MOSI_PIN:   0..31
+'   MISO_PIN:   0..31
+'   RESET_PIN:  0..31
+
+'   Returns: cog ID of SPI engine+1
+
     if (    lookdown(CS_PIN: 0..31) and lookdown(SCK_PIN: 0..31) and lookdown(MOSI_PIN: 0..31) ...
             and lookdown(MISO_PIN: 0..31) )
         if ( status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, core.SPI_MODE) )
@@ -251,9 +254,9 @@ PUB agc_mode(state=-2): curr_state
 '       TRUE(-1 or 1), *FALSE (0)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.MDMCFG3)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := (||(state) & 1) << core.AGCAUTOON
+            state := (abs(state) & 1) << core.AGCAUTOON
             state := ((curr_state & core.AGCAUTOON_MASK) | state)
             writereg(core.MDMCFG3, state)
         other:
@@ -334,9 +337,9 @@ PUB crc_check_ena(state=-2): curr_state
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.MDMCFG2)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.RXPAYLDCRCON
+            state := abs(state) << core.RXPAYLDCRCON
             state := ((curr_state & core.RXPAYLDCRCON_MASK) | state)
             writereg(core.MDMCFG2, state)
         other:
@@ -635,9 +638,9 @@ PUB low_data_rate_optimize(state=-2): curr_state
 '   Any other value polls the chip and returns the current setting
 '   NOTE: This setting is mandated when the symbol length exceeds 16ms
     curr_state := readreg(core.MDMCFG3)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.LOWDRATEOPT
+            state := abs(state) << core.LOWDRATEOPT
             state := ((curr_state & core.LOWDRATEOPT_MASK) | state)
             writereg(core.MDMCFG3, state)
         other:
@@ -650,9 +653,9 @@ PUB low_freq_mode(state=-2): curr_state | lfmask
 '       TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.OPMODE)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := (||(state) << core.LOWFREQMODEON)
+            state := (abs(state) << core.LOWFREQMODEON)
             if (curr_state & core.LORAMODE)
                 lfmask := core.LOWFREQMODEONL_MASK
             else
@@ -742,9 +745,9 @@ PUB over_current_prot(state=-2): curr_state
 '      *TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
     curr_state := readreg(core.OCP)
-    case ||(state)
+    case abs(state)
         0, 1:
-            state := ||(state) << core.OCPON
+            state := abs(state) << core.OCPON
             state := ((curr_state & core.OCPON_MASK) | state)
             writereg(core.OCP, state)
         other:
@@ -861,7 +864,7 @@ PUB preamble_len(length=-2):  curr_len
 
 PUB reset()
 ' Perform soft-reset
-    if ( lookdown(_RESET: 0..31) )                  ' if a valid pin is set,
+    if ( lookdown(_RESET: 0..31) )              ' if a valid pin is set,
         outa[_RESET] := 0                       ' pull NRESET low for 100uS,
         dira[_RESET] := 1
         time.usleep(core.T_RESACTIVE)
@@ -883,7 +886,7 @@ PUB rssi_int_thresh(thresh=-255): curr_thr
 '   Any other value polls the chip and returns the current setting
     case thresh
         -127..0:
-            thresh := ||(thresh) * 2
+            thresh := abs(thresh) * 2
             writereg(core.RSSITHRESH, thresh)
         other:
             return -(readreg(core.RSSITHRESH) / 2)
@@ -1095,8 +1098,8 @@ PUB valid_pkts_recvd(): nr_pkts
     return readreg(core.RXPACKETCNTVALUEMSB, 2)
 
 
-PRI readreg(reg_nr, nr_bytes=1): val
-' Read nr_bytes from device into ptr_buff
+PRI readreg(reg_nr, len=1): val
+' Read value(s) from register
     case reg_nr
         $00, $01..$2A, $2C, $2F, $31, $32, $39, $40, $42, $44, $4B, $4D, $5B, $5D, $61..$64, $70:
         other:
@@ -1104,12 +1107,12 @@ PRI readreg(reg_nr, nr_bytes=1): val
 
     outa[_CS] := 0
         spi.wr_byte(reg_nr)
-        spi.rdblock_msbf(@val, nr_bytes)
+        spi.rdblock_msbf(@val, len)
     outa[_CS] := 1
 
 
-PRI writereg(reg_nr, val, nr_bytes=1)
-' Write nr_bytes from ptr_buff to device
+PRI writereg(reg_nr, val, len=1)
+' Write value(s) to register
     case reg_nr
         $00, $01..$0F, $10..$12, $16, $1D..$24, $26, $27, $2F, $31, $32, $39, $40, $44, $4B, ...
         $4D, $5D, $61..$64, $70:
@@ -1118,13 +1121,13 @@ PRI writereg(reg_nr, val, nr_bytes=1)
 
     outa[_CS] := 0
         spi.wr_byte(reg_nr | core.SPI_WR)
-        spi.wrblock_msbf(@val, nr_bytes)
+        spi.wrblock_msbf(@val, len)
     outa[_CS] := 1
 
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2025 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

@@ -4,8 +4,8 @@
     Description:    Driver for the SEMTECH SX1276 LoRa/FSK/OOK transceiver (LoRa mode)
     Author:         Jesse Burt
     Started:        Oct 6, 2019
-    Updated:        Oct 8, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Dec 1, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -17,7 +17,7 @@ CON
     MOSI                    = 2
     MISO                    = 3
     RST                     = 0
-    SPI_FREQ                = 1_000_000
+    SPI_FREQ                = 1_000_000         ' max 10MHz
 
 
     FXOSC                   = 32_000_000
@@ -116,11 +116,15 @@ PUB start(): status
 
 PUB startx(CS_PIN, SCK_PIN, MOSI_PIN, MISO_PIN, RESET_PIN, SCK_FREQ): status
 ' Start the driver with custom I/O settings
-'   CS_PIN: 0..63
-'   SCK_PIN: 0..63
-'   MOSI_PIN: 0..63
-'   MISO_PIN: 0..63
-'   RESET_PIN: 0..63
+'   CS_PIN:     0..63
+'   SCK_PIN:    0..63
+'   MOSI_PIN:   0..63
+'   MISO_PIN:   0..63
+'   RESET_PIN:  0..63
+'   SCK_FREQ:   SPI bus speed in Hz
+
+'   Returns: cog ID of SPI engine+1
+
     if (    lookdown(CS_PIN: 0..63) and lookdown(SCK_PIN: 0..63) and lookdown(MOSI_PIN: 0..63) ...
             and lookdown(MISO_PIN: 0..63) )
         if ( status := spi.init(SCK_PIN, MOSI_PIN, MISO_PIN, core.SPI_MODE, SCK_FREQ) )
@@ -858,7 +862,7 @@ PUB preamble_len(length=-2):  curr_len
 
 PUB reset()
 ' Perform soft-reset
-    if ( lookdown(_RESET: 0..63) )                  ' if a valid pin is set,
+    if ( lookdown(_RESET: 0..63) )              ' if a valid pin is set,
         pinl(_RESET)                            ' pull NRESET low for 100uS,
         waitus(core.T_RESACTIVE)
         pinf(_RESET)                            '   then let it float
@@ -868,7 +872,7 @@ PUB reset()
 PUB rssi(): val
 ' Current RSSI, in dBm
     if ( modulation() == LORA )
-        return (-157 + (core.LORA_RSSIVALUE) )
+        return (-157 + readreg(core.LORA_RSSIVALUE) )
     else
         return -(readreg(core.RSSIVALUE) / 2)
 
@@ -1091,8 +1095,8 @@ PUB valid_pkts_recvd(): nr_pkts
     return readreg(core.RXPACKETCNTVALUEMSB, 2)
 
 
-PRI readreg(reg_nr, nr_bytes=1): val
-' Read nr_bytes from device into ptr_buff
+PRI readreg(reg_nr, len=1): val
+' Read value(s) from register
     case reg_nr
         $00, $01..$2A, $2C, $2F, $31, $32, $39, $40, $42, $44, $4B, $4D, $5B, $5D, $61..$64, $70:
         other:
@@ -1100,12 +1104,12 @@ PRI readreg(reg_nr, nr_bytes=1): val
 
     pinl(_CS)
         spi.wr_byte(reg_nr)
-        spi.rdblock_msbf(@val, nr_bytes)
+        spi.rdblock_msbf(@val, len)
     pinh(_CS)
 
 
-PRI writereg(reg_nr, val, nr_bytes=1)
-' Write nr_bytes from ptr_buff to device
+PRI writereg(reg_nr, val, len=1)
+' Write value(s) to register
     case reg_nr
         $00, $01..$0F, $10..$12, $16, $1D..$24, $26, $27, $2F, $31, $32, $39, $40, $44, $4B, ...
         $4D, $5D, $61..$64, $70:
@@ -1114,13 +1118,13 @@ PRI writereg(reg_nr, val, nr_bytes=1)
 
     pinl(_CS)
         spi.wr_byte(reg_nr | core.SPI_WR)
-        spi.wrblock_msbf(@val, nr_bytes)
+        spi.wrblock_msbf(@val, len)
     pinh(_CS)
 
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2025 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
