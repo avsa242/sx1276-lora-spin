@@ -4,13 +4,8 @@
     Description:    Driver for the SEMTECH SX1276 LoRa/FSK/OOK transceiver (LoRa mode)
     Author:         Jesse Burt
     Started:        Oct 6, 2019
-<<<<<<< HEAD
-    Updated:        Jan 5, 2025
-    Copyright (c) 2024 - See end of file for terms of use.
-=======
     Updated:        Dec 1, 2025
     Copyright (c) 2025 - See end of file for terms of use.
->>>>>>> rw_direct
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -258,126 +253,126 @@ PUB preset_dr13()
     rx_bw(500_000)
 
 
-PUB agc_mode(state=-2): curr_state
+PUB agc_mode(md=-2): c
 ' Enable AGC
 '   Valid values:
-'       TRUE(-1 or 1), *FALSE (0)
+'       TRUE(-1 or 1), FALSE (0) (default)
 '   Any other value polls the chip and returns the current setting
-    curr_state := readreg(core.MDMCFG3)
-    case abs(state)
+    c := readreg(core.MDMCFG3)
+    case abs(md)
         0, 1:
-            state := (abs(state) & 1) << core.AGCAUTOON
-            state := ((curr_state & core.AGCAUTOON_MASK) | state)
-            writereg(core.MDMCFG3, state)
+            md := (md & 1) << core.AGCAUTOON
+            md := ( (c & core.AGCAUTOON_MASK) | md)
+            writereg(core.MDMCFG3, md)
         other:
-            return ((curr_state >> core.AGCAUTOON) & 1) == 1
+            return ( (c >> core.AGCAUTOON) & 1) == 1
 
 
-PUB carrier_freq(freq=-2): curr_freq | opmode_orig
+PUB carrier_freq(frq=-2): c | opmode_orig
 ' Set carrier frequency, in Hz
 '   Valid values: See case table below
 '   Any other value polls the chip and returns the current setting
 '   NOTE: The default is 434_000_000
     opmode_orig := 0
-    case freq
+    case frq
         137_000_000..175_000_000, 410_000_000..525_000_000, 862_000_000..1_020_000_000:
-            freq := muldiv64(freq, FPSCALE, FSTEP)
+            frq := muldiv64(frq, FPSCALE, FSTEP)
             opmode_orig := opmode()
-            opmode(STDBY)
-            writereg(core.FRFMSB, freq, 3)
-            opmode(opmode_orig)
+            opmode(STDBY)                       ' must be in standby to change freqs
+            writereg(core.FRFMSB, frq, 3)
+            opmode(opmode_orig)                 ' change back to previous opmode
         other:
             return muldiv64(FSTEP, readreg(core.FRFMSB, 3), FPSCALE)
 
 
-PUB channel(number=-2): curr_chan
+PUB channel(ch=-2): c
 ' Set LoRa uplink channel
 '   Valid values: 0..63
 '   Any other value polls the chip and returns the current setting
 '   NOTE: Actual effective frequency depends on currently set band plan/region
     case _region
         USA:
-            case number
+            case ch
                 0..63:
-                    number := 902_300_000 + (200_000 * number)
-                    carrier_freq(number)
+                    ch := 902_300_000 + (200_000 * ch)
+                    carrier_freq(ch)
                 other:
-                    curr_chan := carrier_freq()
-                    return (curr_chan - 902_300_000) / 200_000
+                    c := carrier_freq()
+                    return (c - 902_300_000) / 200_000
         EU868:
-            case number
+            case ch
                 0..9:
-                    number := lookupz(number:   868_100_000, 868_300_000, 868_500_000, ...
+                    ch := lookupz(ch:   868_100_000, 868_300_000, 868_500_000, ...
                                                 867_100_000, 867_300_000, 867_500_000, ...
                                                 867_700_000, 867_900_000, 868_800_000, ...
                                                 869_525_000)
                 other:
-                    curr_chan := carrier_freq()
-                    return lookdownz(curr_chan: 868_100_000, 868_300_000, 868_500_000, ...
+                    c := carrier_freq()
+                    return lookdownz(c: 868_100_000, 868_300_000, 868_500_000, ...
                                                 867_100_000, 867_300_000, 867_500_000, ...
                                                 867_700_000, 867_900_000, 868_800_000, ...
                                                 869_525_000)
 
 
-PUB clk_out(divisor=-2): curr_div
+PUB clk_out(d=-2): c
 ' Set clkout frequency, as a divisor of FXOSC
 '   Valid values:
 '       1, 2, 4, 8, 16, 32, CLKOUT_RC (6), CLKOUT_OFF (7)
 '   Any other value polls the chip and returns the current setting
 '   NOTE: For optimal efficiency, it is recommended to disable the clock output (CLKOUT_OFF)
 '       unless needed
-    curr_div := readreg(core.OSC)
-    case divisor
+    c := readreg(core.OSC)
+    case d
         1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF:
-            divisor := lookdownz(divisor: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
-            divisor := ((curr_div & core.CLKOUT_MASK) | divisor)
-            writereg(core.OSC, divisor)
+            d := lookdownz(d: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
+            d := ((c & core.CLKOUT_MASK) | d)
+            writereg(core.OSC, d)
         other:
-            curr_div &= core.CLKOUT_BITS
-            return lookupz(curr_div: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
+            c &= core.CLKOUT_BITS
+            return lookupz(c: 1, 2, 4, 8, 16, 32, CLKOUT_RC, CLKOUT_OFF)
 
 
-PUB code_rate(rate=-2): curr_rate
+PUB code_rate(r=-2): c
 ' Set Error code rate
 '   Valid values:
 '                   k/n
-'      *$04_05  =   4/5
+'       $04_05  =   4/5 (default)
 '       $04_06  =   4/6
 '       $04_07  =   4/7
 '       $04_08  =   4/8
 '   Any other value polls the chip and returns the current setting
-    curr_rate := readreg(core.MDMCFG1)
-    case rate
+    c := readreg(core.MDMCFG1)
+    case r
         $04_05..$04_08:
-            rate := lookdown(rate: $04_05, $04_06, $04_07, $04_08) << core.CODERATE
-            rate := ((curr_rate & core.CODERATE_MASK) | rate)
-            writereg(core.MDMCFG1, rate)
+            r := lookdown(r: $04_05, $04_06, $04_07, $04_08) << core.CODERATE
+            r := ((c & core.CODERATE_MASK) | r)
+            writereg(core.MDMCFG1, r)
         other:
-            curr_rate := (curr_rate >> core.CODERATE) & core.CODERATE_BITS
-            return lookup(curr_rate: $04_05, $04_06, $04_07, $04_08)
+            c := (c >> core.CODERATE) & core.CODERATE_BITS
+            return lookup(c: $04_05, $04_06, $04_07, $04_08)
 
 
-PUB crc_check_ena(state=-2): curr_state
+PUB crc_check_ena(e=-2): c
 ' Enable CRC generation and check on payload
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := readreg(core.MDMCFG2)
-    case abs(state)
+    c := readreg(core.MDMCFG2)
+    case abs(e)
         0, 1:
-            state := abs(state) << core.RXPAYLDCRCON
-            state := ((curr_state & core.RXPAYLDCRCON_MASK) | state)
-            writereg(core.MDMCFG2, state)
+            e := abs(e) << core.RXPAYLDCRCON
+            e := ((c & core.RXPAYLDCRCON_MASK) | e)
+            writereg(core.MDMCFG2, e)
         other:
-            return ((curr_state >> core.RXPAYLDCRCON) & 1) == 1
+            return ((c >> core.RXPAYLDCRCON) & 1) == 1
 
 
-PUB data_rate_offset(ppm=-2): curr_ppm
+PUB data_rate_offset(o=-2): c
 ' Set data rate offset value used in conjunction with AFC, in ppm
 '   Valid values: 0..255
 '   Any other value polls the chip and returns the current setting
-    case ppm
+    case o
         0..255:
-            writereg(core.PPMCORRECTION, ppm)
+            writereg(core.PPMCORRECTION, o)
         other:
             return readreg(core.PPMCORRECTION)
 
@@ -391,7 +386,7 @@ PUB dev_id(): id
     return readreg(core.VERSION)
 
 
-PUB fifo_addr_ptr(ptr=-2): curr_ptr 'XXX needs clarification
+PUB fifo_addr_ptr(ptr=-2): c 'XXX needs clarification
 ' Set SPI interface address pointer in FIFO data buffer
 '   Valid values: $00..$FF
 '   Any other value polls the chip and returns the current setting
@@ -402,156 +397,156 @@ PUB fifo_addr_ptr(ptr=-2): curr_ptr 'XXX needs clarification
             return readreg(core.FIFOADDRPTR)
 
 
-PUB fifo_rx_base_ptr(addr=-2): curr_addr
+PUB fifo_rx_base_ptr(ptr=-2): c
 ' Set start address within FIFO for received data
 '   Valid values: $00..$FF
 '   Any other value polls the chip and returns the current setting
-    case addr
+    case ptr
         $00..$FF:
-            writereg(core.FIFORXBASEADDR, addr)
+            writereg(core.FIFORXBASEADDR, ptr)
         other:
             return readreg(core.FIFORXBASEADDR)
 
 
-PUB fifo_rx_current_addr(): addr
+PUB fifo_rx_current_addr(): a
 ' Start address (in FIFO) of last packet received
 '   Returns: Starting address of last packet received
     return readreg(core.FIFORXCURRENTADDR)
 
 
-PUB fifo_rx_ptr(): ptr
+PUB fifo_rx_ptr(): p
 ' Current value of receive FIFO pointer
 '   Returns: Address of last byte written by LoRa receiver
     return readreg(core.FIFORXBYTEADDR)
 
 
-PUB fifo_tx_base_ptr(addr=-2): curr_addr
+PUB fifo_tx_base_ptr(ptr=-2): c
 ' Set start address within FIFO for transmitted data
 '   Valid values: $00..$FF
 '   Any other value polls the chip and returns the current setting
-    case addr
+    case ptr
         $00..$FF:
-            writereg(core.FIFOTXBASEADDR, addr)
+            writereg(core.FIFOTXBASEADDR, ptr)
         other:
             return readreg(core.FIFOTXBASEADDR)
 
 
-PUB gpio0(mode=-2): curr_mode
+PUB gpio0(md=-2): c
 ' Assert DIO0 pin on set mode
 '   Valid values:
 '       DIO0_RXDONE (0) - Packet reception complete
 '       DIO0_TXDONE (64) - FIFO payload transmission complete
 '       DIO0_CADDONE (128) - Channel Activity Detected
-    curr_mode := readreg(core.DIOMAP1)
-    case mode
+    c := readreg(core.DIOMAP1)
+    case md
         DIO0_RXDONE, DIO0_TXDONE, DIO0_CADDONE:
-            mode <<= core.DIO0MAP
-            mode := ((curr_mode & core.DIO0MAP_MASK) | mode)
-            writereg(core.DIOMAP1, mode)
+            md <<= core.DIO0MAP
+            md := ((c & core.DIO0MAP_MASK) | md)
+            writereg(core.DIOMAP1, md)
         other:
-            return (curr_mode >> core.DIO0MAP) & %11
+            return (c >> core.DIO0MAP) & %11
 
 
-PUB gpio1(mode=-2): curr_mode
+PUB gpio1(md=-2): c
 ' Assert DIO1 pin on set mode
 '   Valid values:
 '       DIO1_RXTIMEOUT (0) - Packet reception timed out
 '       DIO1_FHSSCHANGECHANNEL (64) - FHSS Changed channel
 '       DIO1_CADDETECTED (128) - Channel Activity Detected
-    curr_mode := readreg(core.DIOMAP1)
-    case mode
+    c := readreg(core.DIOMAP1)
+    case md
         DIO1_RXTIMEOUT, DIO1_FHSSCHANGECHANNEL, DIO1_CADDETECTED:
-            mode <<= core.DIO1MAP
-            mode := ((curr_mode & core.DIO1MAP_MASK) | mode)
-            writereg(core.DIOMAP1, mode)
+            md <<= core.DIO1MAP
+            md := ((c & core.DIO1MAP_MASK) | md)
+            writereg(core.DIOMAP1, md)
         other:
-            return (curr_mode >> core.DIO1MAP) & %11
+            return (c >> core.DIO1MAP) & %11
 
 
-PUB gpio2(mode=-2): curr_mode
+PUB gpio2(md=-2): c
 ' Assert DIO2 pin on set mode
 '   Valid values:
 '       DIO2_FHSSCHANGECHANNEL (0) - FHSS Changed channel
 '       DIO2_FHSSCHANGECHANNEL (64) - FHSS Changed channel
 '       DIO2_FHSSCHANGECHANNEL (128) - FHSS Changed channel
-    curr_mode := readreg(core.DIOMAP1)
-    case mode
+    c := readreg(core.DIOMAP1)
+    case md
         DIO2_FHSSCHANGECHANNEL, DIO2_SYNCADDRESS:
-            mode <<= core.DIO2MAP
-            mode := ((curr_mode & core.DIO2MAP_MASK) | mode)
-            writereg(core.DIOMAP1, mode)
+            md <<= core.DIO2MAP
+            md := ((c & core.DIO2MAP_MASK) | md)
+            writereg(core.DIOMAP1, md)
         other:
-            return (curr_mode >> core.DIO2MAP) & %11
+            return (c >> core.DIO2MAP) & %11
 
 
-PUB gpio3(mode=-2): curr_mode
+PUB gpio3(md=-2): c
 ' Assert DIO3 pin on set mode
 '   Valid values:
 '       DIO3_CADDONE (0) - Channel Activity Detection complete
 '       DIO3_VALIDHDR (64) - Valider header received in RX mode
 '       DIO3_PAYLDCRCERROR (128) - CRC error in received payload
-    curr_mode := readreg(core.DIOMAP1)
-    case mode
+    c := readreg(core.DIOMAP1)
+    case md
         DIO3_CADDONE, DIO3_VALIDHDR, DIO3_PAYLDCRCERROR:
-            mode <<= core.DIO3MAP
-            mode := ((curr_mode & core.DIO3MAP_MASK) | mode)
-            writereg(core.DIOMAP1, mode)
+            md <<= core.DIO3MAP
+            md := ((c & core.DIO3MAP_MASK) | md)
+            writereg(core.DIOMAP1, md)
         other:
-            return curr_mode & %11
+            return c & %11
 
 
-PUB gpio4(mode=-2): curr_mode
+PUB gpio4(md=-2): c
 ' Assert DIO4 pin on set mode
 '   Valid values:
 '       DIO4_CADDETECTED (0) - Channel Activity Detected
 '       DIO4_PLLLOCK (64) - PLL Locked
 '       DIO4_PLLLOCK (128) - PLL Locked
-    curr_mode := readreg(core.DIOMAP2)
-    case mode
+    c := readreg(core.DIOMAP2)
+    case md
         DIO4_CADDETECTED, DIO4_PLLLOCK:
-            mode <<= core.DIO4MAP
-            mode := ((curr_mode & core.DIO4MAP_MASK) | mode)
-            writereg(core.DIOMAP2, mode)
+            md <<= core.DIO4MAP
+            md := ((c & core.DIO4MAP_MASK) | md)
+            writereg(core.DIOMAP2, md)
         other:
-            return (curr_mode >> core.DIO4MAP) & %11
+            return (c >> core.DIO4MAP) & %11
 
 
-PUB gpio5(mode=-2): curr_mode
+PUB gpio5(md=-2): c
 ' Assert DIO5 pin on set mode
 '   Valid values:
 '       DIO5_MODEREADY (0) - Requested operation mode is ready
 '       DIO5_CLKOUT (64) - Output system clock
 '       DIO5_CLKOUT (128) - Output system clock
-    curr_mode := readreg(core.DIOMAP2)
-    case mode
+    c := readreg(core.DIOMAP2)
+    case md
         DIO5_MODEREADY, DIO5_CLKOUT:
-            mode <<= core.DIO5MAP
-            mode := ((curr_mode & core.DIO5MAP_MASK) | mode)
-            writereg(core.DIOMAP2, mode)
+            md <<= core.DIO5MAP
+            md := ((c & core.DIO5MAP_MASK) | md)
+            writereg(core.DIOMAP2, md)
         other:
-            return (curr_mode >> core.DIO5MAP) & %11
+            return (c >> core.DIO5MAP) & %11
 
 
-PUB hdr_info_valid(): flag
+PUB hdr_info_valid(): f
 ' Flag indicating header in received packet is valid (with correct CRC)
 '   Returns: TRUE (-1) if header valid, FALSE (0) otherwise
     return ( ( (modem_status() >> core.HDR_VALID) & 1) == 1)
 
 
-PUB hop_channel(): curr_chan
+PUB hop_channel(): c
 ' Returns current frequency hopping channel
     return ( readreg(core.HOPCHANNEL) & core.FHSSPRES_CHAN_BITS )
 
 
-PUB hop_period(symb_periods=-2): curr_periods
+PUB hop_period(p=-2): c
 ' Set symbol periods between frequency hops
 '   Valid values: 0..255
 '   Any other value polls the chip and returns the current setting
 '   NOTE: The first hop always occurs after the first header symbol
 '   NOTE: 0 effectively disables hopping
-    case symb_periods
+    case p
         0..255:
-            writereg(core.HOPPERIOD, symb_periods)
+            writereg(core.HOPPERIOD, p)
         other:
             return readreg(core.HOPPERIOD)
 
@@ -561,7 +556,7 @@ PUB idle()
     opmode(STDBY)
 
 
-PUB int_clear(mask)
+PUB int_clear(m)
 ' Clear interrupt flags
 '   Valid values:
 '   Bits 7..0 (0: don't clear interrupt, 1: clear interrupt)
@@ -574,10 +569,10 @@ PUB int_clear(mask)
 '       1: FHSS change channel
 '       0: CAD detected
 '   Any other value is ignored
-    writereg(core.IRQFLAGS, (mask & $ff) )
+    writereg(core.IRQFLAGS, (m & $ff) )
 
 
-PUB interrupt(): mask
+PUB interrupt(): m
 ' Read interrupt flags
 '   Returns: Interrupt flags as a mask
 '   Bits 7..0
@@ -592,7 +587,7 @@ PUB interrupt(): mask
     return readreg(core.IRQFLAGS)
 
 
-PUB int_mask(mask=-2): curr_mask
+PUB int_mask(m=-2): c
 ' Set interrupt mask
 '   Bits: 7..0
 '       7: Receive timeout
@@ -604,16 +599,16 @@ PUB int_mask(mask=-2): curr_mask
 '       1: FHSS change channel
 '       0: CAD detected
 '   Any other value polls the chip and returns the current setting
-    case mask
+    case m
         %0000_0000..%1111_1111:
             { flip bits so '1' enables interrupt, '0' clears }
-            mask := ((mask & $ff) ^ $ff)
-            writereg(core.IRQFLAGS_MASK, mask)
+            m := ((m & $ff) ^ $ff)
+            writereg(core.IRQFLAGS_MASK, m)
         other:
             return (readreg(core.IRQFLAGS_MASK) ^ $ff)
 
 
-PUB last_hdr_had_crc(): flag
+PUB last_hdr_had_crc(): f
 ' Flag indicating last header was received with CRC on
 '   Returns:
 '       FALSE (0): Header indicates CRC is off
@@ -621,7 +616,7 @@ PUB last_hdr_had_crc(): flag
     return ( ( (readreg(core.HOPCHANNEL) >> core.CRCONPAYLD) & 1) == 1)
 
 
-PUB last_hdr_rate(): rate
+PUB last_hdr_rate(): r
 ' Coding rate of last header received
 '   Returns:
 '                   k/n
@@ -629,74 +624,74 @@ PUB last_hdr_rate(): rate
 '       $04_06  =   4/6
 '       $04_07  =   4/7
 '       $04_08  =   4/8
-    rate := readreg(core.MDMSTAT) >> core.RXCODERATE
-    return lookup(rate: $04_05, $04_06, $04_07, $04_08)
+    r := readreg(core.MDMSTAT) >> core.RXCODERATE
+    return lookup(r: $04_05, $04_06, $04_07, $04_08)
 
 
-PUB last_pkt_len(): nr_bytes
+PUB last_pkt_len(): l
 ' Number of payload bytes of last packet received
     return readreg(core.RXNBBYTES)
 
 
-PUB lna_gain(gain=-255): curr_gain
+PUB lna_gain(g=-255): c
 ' Set LNA gain, in dB
 '   Valid values: *0 (Maximum gain), -6, -12, -24, -36, -48
 '   Any other value polls the chip and returns the current setting
 '   NOTE: This setting will have no effect if AGC is enabled
 '   NOTE: If the AGC is enabled, reading the current setting will return the current LNA gain
 '       as determined by the AGC, not necessarily what had been previously set
-    curr_gain := readreg(core.LNA)
-    case gain
+    c := readreg(core.LNA)
+    case g
         0, -6, -12, -24, -36, -48:
-            gain := lookdown(gain: 0, -6, -12, -24, -36, -48) << core.LNAGAIN
-            gain := ((curr_gain & core.LNAGAIN_MASK) | gain)
-            writereg(core.LNA, curr_gain)
+            g := lookdown(g: 0, -6, -12, -24, -36, -48) << core.LNAGAIN
+            g := ((c & core.LNAGAIN_MASK) | g)
+            writereg(core.LNA, c)
         other:
-            curr_gain := (curr_gain >> core.LNAGAIN) & core.LNAGAIN_BITS
-            return lookup(curr_gain: 0, -6, -12, -24, -36, -48)
+            c := (c >> core.LNAGAIN) & core.LNAGAIN_BITS
+            return lookup(c: 0, -6, -12, -24, -36, -48)
 
 
-PUB low_data_rate_optimize(state=-2): curr_state
+PUB low_data_rate_optimize(e=-2): g
 ' Optimize for low data rates
 '   Valid values:
 '       TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
 '   NOTE: This setting is mandated when the symbol length exceeds 16ms
-    curr_state := readreg(core.MDMCFG3)
-    case abs(state)
+    g := readreg(core.MDMCFG3)
+    case abs(e)
         0, 1:
-            state := abs(state) << core.LOWDRATEOPT
-            state := ((curr_state & core.LOWDRATEOPT_MASK) | state)
-            writereg(core.MDMCFG3, state)
+            e := abs(e) << core.LOWDRATEOPT
+            e := ((g & core.LOWDRATEOPT_MASK) | e)
+            writereg(core.MDMCFG3, e)
         other:
-            return ((curr_state >> core.LOWDRATEOPT) & 1) == 1
+            return ((g >> core.LOWDRATEOPT) & 1) == 1
 
 
-PUB low_freq_mode(state=-2): curr_state | lfmask
+PUB low_freq_mode(s=-2): c | lfmask
 ' Enable Low frequency-specific register access
 '   Valid values:
 '       TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := readreg(core.OPMODE)
-    case abs(state)
+    c := readreg(core.OPMODE)
+    case abs(s)
         0, 1:
-            state := (abs(state) << core.LOWFREQMODEON)
-            if (curr_state & core.LORAMODE)
-                lfmask := core.LOWFREQMODEONL_MASK
+            s := (abs(s) << core.LOWFREQMODEON)
+            if (c & core.LORAMODE)
+                lfmask := core.LOWFREQMODEONL_MASK'xxx both of these are the same...
             else
                 lfmask := core.LOWFREQMODEONL_MASK
-            state := ((curr_state & LFMASK) | state)
-            writereg(core.OPMODE, state)
+            s := ((c & LFMASK) | s)
+            writereg(core.OPMODE, s)
         other:
-            return ((curr_state >> core.LOWFREQMODEON) & 1) == 1
+            return ((c >> core.LOWFREQMODEON) & 1) == 1
 
 
-PUB modem_clear(): flag
+PUB modem_clear(): f
 ' Flag indicating modem is clear
     return ( ( (modem_status() >> core.MDM_CLR) & 1) == 1)
 
 
-PUB modem_status(): status
+PUB modem_status(): s
 ' Get modem status
 '   Bits: 4..0
 '       4: modem clear
@@ -707,39 +702,39 @@ PUB modem_status(): status
     return ( readreg(core.MDMSTAT) & core.MDMSTATUS_BITS )
 
 
-PUB modulation(mode=-2): curr_mode | lr_mode, opmode_orig
+PUB modulation(md=-2): c | lr_mode, opmode_orig
 ' Set modulation type
 '   Valid values:
 '       FSK (0): FSK packet radio mode (POR)
 '       OOK (1): OOK packet radio mode
 '       LORA (4): LoRa radio mode
 '   Any other value polls the chip and returns the current setting
-    curr_mode := readreg(core.OPMODE)
-    opmode_orig := (curr_mode & core.MODE_BITS) ' cache user's current opmode
-    case mode
+    c := readreg(core.OPMODE)
+    opmode_orig := (c & core.MODE_BITS) ' cache user's current opmode
+    case md
         FSK, OOK, LORA:                         ' b7..5:
-            mode <<= core.MODTYPE               ' lora: 100, ook: 001, fsk: 000
+            md <<= core.MODTYPE                 ' lora: 100, ook: 001, fsk: 000
             ' special handling required:
             '   set operating mode to SLEEP (required to change the LORAMODE bit)
             '   OPMODE's regmask is different when already in LoRa mode
             '   some register bits meaning differ in the two modes (LoRa vs FSK/OOK)
-            if (curr_mode & core.LORAMODE)              ' currently in LoRa mode?
-                if (mode & core.LORAMODE)               ' requested mode is also LoRa
-                    return                              '   - no change, so bail out
-                lr_mode := (curr_mode & core.MODEL_MASK & core.LORAMODEL_MASK)
-                mode := (curr_mode & core.MODE_MASK & core.LORAMODE_MASK) | mode
+            if (c & core.LORAMODE)              ' currently in LoRa mode?
+                if (md & core.LORAMODE)         ' requested mode is also LoRa
+                    return                      '   - no change, so bail out
+                lr_mode := (c & core.MODEL_MASK & core.LORAMODEL_MASK)
+                md := (c & core.MODE_MASK & core.LORAMODE_MASK) | md
                 writereg(core.OPMODE, lr_mode)
-                writereg(core.OPMODE, mode)
+                writereg(core.OPMODE, md)
             else
-                mode := (curr_mode & core.MODE_MASK & core.MODTYPE_LORA_MASK) | mode
-                writereg(core.OPMODE, mode)
-            waitus(core.T_POR)                          ' wait for chip to be ready
-            opmode(opmode_orig)                         ' restore user's opmode
+                md := (c & core.MODE_MASK & core.MODTYPE_LORA_MASK) | md
+                writereg(core.OPMODE, md)
+            waitus(core.T_POR)                  ' wait for chip to be ready
+            opmode(opmode_orig)                 ' restore user's opmode
         other:
-            return (curr_mode >> core.MODTYPE) & core.MODTYPE_LORA_BITS
+            return (c >> core.MODTYPE) & core.MODTYPE_LORA_BITS
 
 
-PUB opmode(mode=-2): curr_mode | modemask
+PUB opmode(md=-2): c | modemask
 ' Set device operating mode
 '   Valid values:
 '       SLEEPMODE (%000): Sleep
@@ -751,71 +746,71 @@ PUB opmode(mode=-2): curr_mode | modemask
 '       RXSINGLE (%110): Receive single
 '       CAD (%111): Channel activity detection
 '   Any other value polls the chip and returns the current setting
-    curr_mode := readreg(core.OPMODE)
-    case mode
+    c := readreg(core.OPMODE)
+    case md
         SLEEPMODE..CAD:
-            if (curr_mode & core.LORAMODE)
+            if (c & core.LORAMODE)
                 modemask := core.MODEL_MASK
             else
                 modemask := core.MODE_MASK
-            mode := ((curr_mode & modemask) | mode)
-            writereg(core.OPMODE, mode)
+            md := ( (c & modemask) | md)
+            writereg(core.OPMODE, md)
         other:
-            return (curr_mode & core.MODE_BITS)
+            return (c & core.MODE_BITS)
 
 
-PUB over_current_prot(state=-2): curr_state
+PUB over_current_prot(e=-2): c
 ' Enable over-current protection for PA
 '   Valid values:
 '      *TRUE (-1 or 1), FALSE (0)
 '   Any other value polls the chip and returns the current setting
-    curr_state := readreg(core.OCP)
-    case abs(state)
+    c := readreg(core.OCP)
+    case abs(e)
         0, 1:
-            state := abs(state) << core.OCPON
-            state := ((curr_state & core.OCPON_MASK) | state)
-            writereg(core.OCP, state)
+            e := abs(e) << core.OCPON
+            e := ((c & core.OCPON_MASK) | e)
+            writereg(core.OCP, e)
         other:
-            return ( ( (curr_state >> core.OCPON) & 1) == 1)
+            return ( ( (c >> core.OCPON) & 1) == 1)
 
 
-PUB over_current_trim(current=-2): curr_val
+PUB over_current_trim(t=-2): c
 ' Se over-current protection trim value, in milliamps
 '   Valid values: 45..240mA
 '   Any other value polls the chip and returns the current setting
-    curr_val := readreg(core.OCP)
-    case current
+    c := readreg(core.OCP)
+    case t
         45..120:
-            current := ((current - 45) / 5)
+            t := ( (t - 45) / 5)
         130..240:
-            current := ((current - -30) / 10)
+            t := ( (t - -30) / 10)
         other:
-            curr_val := curr_val & core.OCPTRIM
-            case curr_val
+            c := c & core.OCPTRIM
+            case c
                 0..15:
-                    return (45 + (5 * curr_val))
+                    return (45 + (5 * c) )
                 16..27:
-                    return (-30 + (10 * curr_val))
+                    return (-30 + (10 * c) )
                 28..31:
                     return 240
             return
 
-    current := ((curr_val & core.OCPTRIM_MASK) | current)
-    writereg(core.OCP, current)
+    t := ( (c & core.OCPTRIM_MASK) | t)
+    writereg(core.OCP, t)
 
 
-PUB pkt_last_rssi(): lrssi
+PUB pkt_last_rssi(): l
 ' RSSI of last packet received, in dBm
     return (-157 + readreg(core.PKTRSSIVALUE) )
 
 
-PUB pkt_last_snr(): snr
+PUB pkt_last_snr(): s
 ' Signal to noise ratio of last packet received, in dB (estimated)
-    snr := readreg(core.PKTSNRVALUE)
-    return ((snr signx 7) / 4)
+    s := readreg(core.PKTSNRVALUE)
+    return ((s signx 7) / 4)
 
 
-PUB payld_len_cfg(mode=-2): curr_mode
+PUB payld_len_cfg(md=-2): c
 ' Set payload length configuration/mode
 '   Valid values:
 '       PKTLEN_VAR (0): Variable-length payload
@@ -824,65 +819,65 @@ PUB payld_len_cfg(mode=-2): curr_mode
 '   NOTE: When using PKTLEN_FIXED, PayloadLength(), CodeRate(), and
 '       crc_check_ena() must be configured identically on both
 '       TX and RX sides of the radio link.
-    curr_mode := readreg(core.MDMCFG1)
-    case mode
+    c := readreg(core.MDMCFG1)
+    case md
         0, 1:
-            mode := ((curr_mode & core.IMPL_HDRMODEON_MASK) | mode)
-            writereg(core.MDMCFG1, mode)
+            md := ((c & core.IMPL_HDRMODEON_MASK) | md)
+            writereg(core.MDMCFG1, md)
         other:
-            return (curr_mode & 1)
+            return (c & 1)
 
 
-PUB payld_len(len=-2): curr_len
+PUB payld_len(l=-2): c
 ' Set payload length, in bytes
 '   Valid values: 1..255 (LoRa), 1..2047 (FSK/OOK)
 '   Any other value polls the chip and returns the current setting
     case modulation()
         LORA:
-            if ( lookdown(len: 1..255) )
-                writereg(core.LORA_PAYLDLENGTH, len)
+            if ( lookdown(l: 1..255) )
+                writereg(core.LORA_PAYLDLENGTH, l)
             else
                 return readreg(core.LORA_PAYLDLENGTH)
         FSK, OOK:
-            curr_len := readreg(core.PACKETCFG2, 2)
-            if ( lookdown(len: 1..2047) )
-                len := ((curr_len & core.PAYLDLEN_MASK) | len)
-                writereg(core.PACKETCFG2, len, 2)
+            c := readreg(core.PACKETCFG2, 2)
+            if ( lookdown(l: 1..2047) )
+                l := ( (c & core.PAYLDLEN_MASK) | l)
+                writereg(core.PACKETCFG2, l, 2)
             else
-                return (curr_len & core.PAYLDLEN_BITS)
+                return (c & core.PAYLDLEN_BITS)
 
 
-PUB payld_max_len(len=-2): curr_len
+PUB payld_max_len(l=-2): c
 ' Set payload maximum length, in bytes
 '   Valid values: 0..255
 '   Any other value polls the chip and returns the current setting
 '   NOTE: If header payload length exceeds this value, a header CRC error is generated,
 '       allowing filtering of packets with a bad size
-    case len
+    case l
         0..255:
-            writereg(core.MAXPAYLDLENGTH, len)
+            writereg(core.MAXPAYLDLENGTH, l)
         other:
             return readreg(core.MAXPAYLDLENGTH)
 
 
-PUB pll_locked(): flag
+PUB pll_locked(): f
 ' Return PLL lock status, while attempting a TX, RX, or CAD operation
 '   Returns:
 '       0: PLL didn't lock
 '       1: PLL locked
-    flag := readreg(core.HOPCHANNEL)
-    return ((flag >> core.PLLTIMEOUT) & 1) ^ 1  ' wording/logic of this field
+    f := readreg(core.HOPCHANNEL)
+    return ( (f >> core.PLLTIMEOUT) & 1) ^ 1    ' wording/logic of this field
                                                 ' is reversed in the datasheet,
                                                 ' so invert the bit here
 
 
-PUB preamble_len(length=-2):  curr_len
+PUB preamble_len(l=-2): c
 ' Set preamble length, in bits
 '   Valid values: 0..65535
 '   Any other value polls the chip and returns the current setting
-    case length
+    case l
         0..65535:
-            writereg(core.LORA_PREAMBLEMSB, length, 2)
+            writereg(core.LORA_PREAMBLEMSB, l, 2)
         other:
             return readreg(core.LORA_PREAMBLEMSB)
 
@@ -901,7 +896,7 @@ PUB reset()
         waitus(core.T_RES)                      ' wait for the chip to be ready
 
 
-PUB rssi(): val
+PUB rssi(): r
 ' Current RSSI, in dBm
     if ( modulation() == LORA )
         return (-157 + readreg(core.LORA_RSSIVALUE) )
@@ -909,37 +904,36 @@ PUB rssi(): val
         return -(readreg(core.RSSIVALUE) / 2)
 
 
-PUB rssi_int_thresh(thresh=-255): curr_thr
+PUB rssi_int_thresh(t=-255): c
 ' Set threshold for triggering RSSI interrupt, in dBm
 '   Valid values: -127..0
 '   Any other value polls the chip and returns the current setting
-    case thresh
+    case t
         -127..0:
-            thresh := abs(thresh) * 2
-            writereg(core.RSSITHRESH, thresh)
+            t := abs(t) * 2
+            writereg(core.RSSITHRESH, t)
         other:
             return -(readreg(core.RSSITHRESH) / 2)
 
 
-PUB rx_bw(bw=-2): curr_bw
+PUB rx_bw(b=-2): c
 ' Set receive bandwidth, in Hz
 '   Valid values: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, *125_000, 250_000, 500_000
 '   Any other value polls the chip and returns the current setting
 '   NOTE: This setting also directly affects occupied RF bandwidth
 '       when transmitting
 '   NOTE: In the 169MHz band, 250_000 and 500_000 are not supported
-    curr_bw := readreg(core.MDMCFG1)
-    case bw
+    c := readreg(core.MDMCFG1)
+    case b
         7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, 125_000, 250_000, 500_000:
-            bw := lookdownz(bw: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, 125_000, ...
+            b := lookdownz(b: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, 125_000, ...
                                 250_000, 500_000) << core.BW
+            b := ((c & core.BW_MASK) | b)
+            writereg(core.MDMCFG1, b)
         other:
-            curr_bw := (curr_bw >> core.BW)
-            return lookupz(curr_bw: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, ...
+            c := (c >> core.BW)
+            return lookupz(c: 7800, 10_400, 15_600, 20_800, 31_250, 41_700, 62_500, ...
                                     125_000, 250_000, 500_000)
-
-    bw := ((curr_bw & core.BW_MASK) | bw)
-    writereg(core.MDMCFG1, bw)
 
 
 PUB rx_mode()
@@ -947,41 +941,38 @@ PUB rx_mode()
     opmode(RXCONT)
 
 
-PUB rx_ongoing(): flag
+PUB rx_ongoing(): r
 ' Flag indicating modem is in ongoing receive mode
     return ( ( (modem_status() >> core.RX_ONGOING) & 1) == 1)
 
 
-PUB rx_payld(nr_bytes, ptr_buff)
-' Receive data from RX FIFO into buffer at ptr_buff
-'   Valid values: nr_bytes - 1..255
-'   Any other value is ignored
-    case nr_bytes
-        1..255:
-            outa[_CS] := 0
-                spi.wr_byte(core.FIFO)
-                spi.rdblock_msbf(ptr_buff, nr_bytes)
-            outa[_CS] := 1
-        other:
-            return
+PUB rx_payld(l, p_dest)
+' Receive data from RX FIFO
+'   l:      length of data to receive in bytes
+'   p_dest: pointer to destination buffer to copy data to
+    if ( (l >= 1) and (l <= 255) )
+        pinl(_CS)
+            spi.wr_byte(core.FIFO)
+            spi.rdblock_msbf(p_dest, l)
+        pinh(_CS)
 
 
-PUB rx_timeout(symbols=-2): curr_symb | symbtimeout_msb, symbtimeout_lsb
+PUB rx_timeout(t=-2): c | symbtimeout_msb, symbtimeout_lsb
 ' Set receive timeout, in symbols
 '   Valid values: 0..1023
 '   Any other value polls the chip and returns the current setting
-    curr_symb := readreg(core.MDMCFG2, 2)       ' The top 2 bits of SYMBTIMEOUT are in this reg
-    case symbols                                '   the bottom 8 bits are in the next reg
+    c := readreg(core.MDMCFG2, 2)       ' The top 2 bits of SYMBTIMEOUT are in this reg
+    case t                                '   the bottom 8 bits are in the next reg
         0..1023:
-            symbtimeout_msb := symbols >> 8
-            symbtimeout_lsb := symbols & $FF
-            curr_symb >>= 8
-            curr_symb &= core.SYMBTIMEOUTMSB_MASK
-            curr_symb := (curr_symb | symbtimeout_msb)
-            writereg(core.MDMCFG2, curr_symb)
+            symbtimeout_msb := t >> 8
+            symbtimeout_lsb := t & $FF
+            c >>= 8
+            c &= core.SYMBTIMEOUTMSB_MASK
+            c := (c | symbtimeout_msb)
+            writereg(core.MDMCFG2, c)
             writereg(core.SYMBTIMEOUTLSB, symbtimeout_lsb)
         other:
-            return curr_symb & core.SYMBTIMEOUT_BITS
+            return c & core.SYMBTIMEOUT_BITS
 
 
 PUB set_region(r)
@@ -992,12 +983,12 @@ PUB set_region(r)
     _region := r
 
 
-PUB signal_detected(): flag
+PUB signal_detected(): s
 ' Flag indicating valid LoRa preamble is detected
     return ( (modem_status() & 1) == 1)
 
 
-PUB signal_syncd(): flag
+PUB signal_syncd(): s
 ' Flag indicating end of preamble is detected (modem is in lock)
     return ( ( (modem_status() >> core.SIG_SYNCD) & 1) == 1)
 
@@ -1007,33 +998,33 @@ PUB sleep()
     opmode(SLEEPMODE)
 
 
-PUB spread_fact(sf=-2): curr_sf
+PUB spread_fact(sf=-2): c
 ' Set spreading factor
 '   Valid values: 6, *7, 8, 9, 10, 11, 12
 '   Any other value polls the chip and returns the current setting
-    curr_sf := readreg(core.MDMCFG2)
+    c := readreg(core.MDMCFG2)
     case sf
         6..12:
             sf <<= core.SPREADFACT
-            sf := ((curr_sf & core.SPREADFACT_MASK) | sf)
+            sf := ((c & core.SPREADFACT_MASK) | sf)
             writereg(core.MDMCFG2, sf)
         other:
-            return (curr_sf >> core.SPREADFACT)
+            return (c >> core.SPREADFACT)
 
 
-PUB set_syncwd(ptr_syncwd)
+PUB set_syncwd(p_src)
 ' Set LoRa Syncword
-'   ptr_syncwd: pointer to copy syncword data from
-    writereg(core.SYNCWORD, long[ptr_syncwd])
+'   p_src: pointer to copy syncword data from
+    writereg(core.SYNCWORD, long[p_src])
 
 
-PUB syncwd(ptr_syncwd)
+PUB syncwd(p_dest)
 ' Get current syncword
-'   ptr_syncwd: pointer to copy syncword data to
-    long[ptr_syncwd] := readreg(core.SYNCWORD)
+'   p_dest: pointer to buffer to copy syncword data to
+    long[p_dest] := readreg(core.SYNCWORD)
 
 
-PUB tx_cont(state=-2): curr_state
+PUB tx_cont(md=-2): c
 ' Set continuous transmit mode
 '   Valid values:
 '      *TXMODE_NORMAL (0): Normal mode; a single packet is sent
@@ -1041,14 +1032,14 @@ PUB tx_cont(state=-2): curr_state
 '   Any other value polls the chip and returns the current setting
 '   NOTE: TXMODE_CONT is used for spectral analysis. Typically, TXMODE_NORMAL
 '       should be used
-    curr_state := readreg(core.MDMCFG2)
-    case state
+    c := readreg(core.MDMCFG2)
+    case md
         TXMODE_NORMAL, TXMODE_CONT:
-            state <<= core.TXCONTMODE
-            state := ((curr_state & core.TXCONTMODE_MASK) | state)
-            writereg(core.MDMCFG2, state)
+            md <<= core.TXCONTMODE
+            md := ((c & core.TXCONTMODE_MASK) | md)
+            writereg(core.MDMCFG2, md)
         other:
-            return (curr_state >> core.TXCONTMODE) & 1
+            return (c >> core.TXCONTMODE) & 1
 
 
 PUB tx_mode()
@@ -1056,80 +1047,77 @@ PUB tx_mode()
     opmode(TX)
 
 
-PUB tx_payld(nr_bytes, ptr_buff)
+PUB tx_payld(l, p_src)
 ' Queue data to be transmitted in the TX FIFO
-'   nr_bytes Valid values: 1..255
-'   Any other value is ignored
-    case nr_bytes
-        1..255:
-            pinl(_CS)
-                spi.wr_byte(core.FIFO | core.SPI_WR)
-                spi.wrblock_msbf(ptr_buff, nr_bytes)
-            pinh(_CS)
-        other:
-            return
+'   l:      length of data to transmit (1..255)
+'   p_src:  pointer to buffer containing data to transmit
+    if ( (l >= 1) and (l <= 255) )
+        pinl(_CS)
+            spi.wr_byte(core.FIFO | core.SPI_WR)
+            spi.wrblock_msbf(p_src, l)
+        pinh(_CS)
 
 
-PUB tx_pwr(pwr=-255): curr_pwr | pa_dac
+PUB tx_pwr(p=-255): c | pa_dac
 ' Set transmit power, in dBm
 '   Valid values:
 '       -1..14 (when tx_sig_routing() == RFO)
 '       5..23 (when tx_sig_routing() == PABOOST)
 '   Any other value polls the chip and returns the current setting
-    curr_pwr := readreg(core.PACFG)
+    c := readreg(core.PACFG)
     pa_dac := readreg(core.PADAC)
     case _txsig_routing
         RFO:
-            case pwr
+            case p
                 -1..14:
-                    curr_pwr := (7 << core.MAXPWR) | (pwr + 1)
+                    c := (7 << core.MAXPWR) | (p + 1)
                 other:
-                    return (curr_pwr & core.OUTPUTPWR_BITS) - 1
-            writereg(core.PACFG, curr_pwr)
+                    return (c & core.OUTPUTPWR_BITS) - 1
+            writereg(core.PACFG, c)
         PABOOST:
-            case pwr
+            case p
                 5..20:
                     pa_dac := core.PADAC_RSVD_DEF | core.PA_DEF ' preserve the
                 21..23:                                         ' reserved bits
                     pa_dac := core.PADAC_RSVD_DEF | core.PA_BOOST
-                    pwr -= 3
+                    p -= 3
                 other:
                     case pa_dac & core.PA_DAC_BITS
                         core.PA_DEF:
-                            return (curr_pwr & core.OUTPUTPWR_BITS) + 5
+                            return (c & core.OUTPUTPWR_BITS) + 5
                         core.PA_BOOST:
-                            return (curr_pwr & core.OUTPUTPWR_BITS) + 8
+                            return (c & core.OUTPUTPWR_BITS) + 8
                         other:
                             return pa_dac
                     return
-            curr_pwr := (1 << core.PASELECT) | (pwr - 5)
+            c := (1 << core.PASELECT) | (p - 5)
             writereg(core.PADAC, pa_dac)
-            writereg(core.PACFG, curr_pwr)
+            writereg(core.PACFG, c)
         other:
-            return (curr_pwr & core.OUTPUTPWR_BITS) - 1
+            return (c & core.OUTPUTPWR_BITS) - 1
 
 
-PUB tx_sig_routing(pin=-2): curr_pin
+PUB tx_sig_routing(p=-2): c
 ' Set transmit signal output routing
 '   Valid values:
 '      *RFO (0): Signal routed to RFO pin, max power is +14dBm
 '       PABOOST (128): Signal routed to PA_BOOST pin, max power is +23dBm
 '   NOTE: This has a direct effect on the maximum output power available
 '       using the tx_pwr() method
-    case pin
+    case p
         RFO, PABOOST:
-            _txsig_routing := pin
+            _txsig_routing := p
         other:
             return _txsig_routing
 
 
-PUB valid_hdrs_recvd(): nr_hdrs
+PUB valid_hdrs_recvd(): h
 ' Number of valid headers received since last transition into receive mode
 '   NOTE: To reset counter, set device to SLEEPMODE
     return readreg(core.RXHDRCNTVALUEMSB, 2)
 
 
-PUB valid_pkts_recvd(): nr_pkts
+PUB valid_pkts_recvd(): p
 ' Number of valid packets received since last transition into receive mode
 '   NOTE: To reset counter, set device to SLEEPMODE
     return readreg(core.RXPACKETCNTVALUEMSB, 2)
